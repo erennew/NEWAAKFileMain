@@ -24,10 +24,12 @@ class Bot(Client):
         )
         self.LOGGER = LOGGER
 
-    async def start(self):
+    async def start(self, use_qr: bool = False, except_ids: list = None):
         await super().start()
-        usr_bot_me = await self.get_me()
-        self.uptime = datetime.now()
+        self.uptime = datetime.now()  # ✅ Store the bot's start time
+        self.me = await self.get_me()  # ✅ Get bot info and store it
+        print(f"Bot started as @{self.me.username} at {self.uptime}")  # ✅ Helpful debug print
+
 
         if FORCE_SUB_CHANNEL_1:
             try:
