@@ -215,7 +215,7 @@ async def not_joined(client: Client, message: Message):
                 id = message.from_user.id
             ),
             reply_markup =InlineKeyboardMarkup(buttons)
-	        message_effect_id=5104841245755180586 #🔥
+	        message_effect_id=5104841245755180586, #🔥
         )
     else:
         await message.reply(
