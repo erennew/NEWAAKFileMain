@@ -92,8 +92,11 @@ AUTO_DELETE_MSG = os.environ.get(
 # Message shown after deletion
 AUTO_DEL_SUCCESS_MSG = os.environ.get(
     "AUTO_DEL_SUCCESS_MSG",
-    "<blockquote>⚡ Straw Hat LUFFY reporting: File deleted with a Gomu Gomu no Slam! Catch ya later! ♻️</blockquote>"
+    "⚡ Straw Hat LUFFY reporting:\nFile deleted with a Gomu Gomu no Slam! 💥🌀🗑️\nCatch ya later, nakama! 👒🏴‍☠️"
 )
+reply = await message.reply(AUTO_DEL_SUCCESS_MSG)
+await auto_delete(reply, message)
+
 
 
 #Set true if you want Disable your Channel Posts Share button
@@ -101,6 +104,7 @@ DISABLE_CHANNEL_BUTTON = os.environ.get("DISABLE_CHANNEL_BUTTON", None) == 'Fals
 
 BOT_STATS_TEXT = "<b><blockquote>BOT UPTIME</b>\n{uptime}</blockquote>"
 USER_REPLY_TEXT = "<blockquote>💖 I’m loyal to one place—@CulturedTeluguweeb! That’s where my real journey begins. For anyone else... sorry, no adventure! 👒</blockquote>"
+await reply_with_clean(message, USER_REPLY_TEXT)
 
 
 ADMINS.append(OWNER_ID)
