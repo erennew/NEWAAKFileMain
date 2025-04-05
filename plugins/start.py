@@ -233,19 +233,24 @@ async def start_command(client: Client, message: Message):
     )
 
 if START_PIC:
-    reply = await message.reply_photo(
-        photo=random.choice(PICS),
-        caption=START_MSG.format(
-            first=message.from_user.first_name,
-            last=message.from_user.last_name,
-            username=None if not message.from_user.username else '@' + message.from_user.username,
-            mention=message.from_user.mention,
-            id=message.from_user.id
-        ),
-        reply_markup=reply_markup,
-        quote=True
-    )
-    await auto_delete(reply, message)  # Corrected indentation here
+    try:
+        reply = await message.reply_photo(
+            photo=random.choice(PICS),
+            caption=START_MSG.format(
+                first=message.from_user.first_name,
+                last=message.from_user.last_name,
+                username=None if not message.from_user.username else '@' + message.from_user.username,
+                mention=message.from_user.mention,
+                id=message.from_user.id
+            ),
+            reply_markup=reply_markup,
+            quote=True
+        )
+        await auto_delete(reply, message)  # Corrected indentation here
+    except Exception as e:
+        print(f"Error replying with photo: {e}")
+        # Optionally, reply with text if there's an issue
+        await message.reply_text("Sorry, there was an issue with the photo.")
 else:
     await message.reply_text(
         text=START_MSG.format(
