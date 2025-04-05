@@ -1,10 +1,11 @@
 import os
 import asyncio
+import random
+import contextlib
 from pyrogram import Client, filters
 from pyrogram.enums import ParseMode
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.errors import FloodWait, UserIsBlocked, InputUserDeactivated
-import random
 from bot import Bot
 PICS = (os.environ.get("PICS", "https://envs.sh/sJX.jpg https://envs.sh/Uc0.jpg https://envs.sh/UkA.jpg https://envs.sh/Uk_.jpg https://envs.sh/Ukc.jpg https://envs.sh/UkZ.jpg https://envs.sh/UkK.jpg")).split()
 from config import ADMINS, FORCE_MSG, START_MSG, CUSTOM_CAPTION, DISABLE_CHANNEL_BUTTON, PROTECT_CONTENT, START_PIC, FORCE_PIC, AUTO_DELETE_TIME, AUTO_DELETE_MSG, JOIN_REQUEST_ENABLE, FORCE_SUB_CHANNEL_1, FORCE_SUB_CHANNEL_2, FORCE_SUB_CHANNEL_3, FORCE_SUB_CHANNEL_4
@@ -32,7 +33,9 @@ async def create_invite_links(client: Client):
     return invite1, invite2, invite3, invite4
 
 
-@Bot.on_message(filters.command('start') & filters.private & subscribed)
+user_rate_limit = {}
+
+@Bot.on_message(filters.command("start") & filters.private & subscribed1 & subscribed2 & subscribed3 & subscribed4)
 async def start_command(client: Client, message: Message):
     id = message.from_user.id
     if not await present_user(id):
@@ -40,6 +43,97 @@ async def start_command(client: Client, message: Message):
             await add_user(id)
         except:
             pass
+
+    hour = datetime.now().hour
+    if hour >= 22 or hour < 6:
+        await message.reply("🌙 Ara Ara~ It’s sleepy hours, but LUFFY's still awake to guard your files! 🛌👒")
+
+    # Rate limit check
+    now = time.time()
+    reqs = user_rate_limit.get(id, [])
+    reqs = [t for t in reqs if now - t < TIME_WINDOW]
+    if len(reqs) >= MAX_REQUESTS:
+        wait_time = int(TIME_WINDOW - (now - reqs[0]))
+        return await message.reply(f"⚠️ Slow down, nakama! You're too fast for LUFFY!
+Try again in <b>{wait_time}</b> seconds. 🐢")
+    reqs.append(now)
+    user_rate_limit[id] = reqs
+
+    # Boot animation setup
+    progress = await message.reply("👒 Booting LUFFY File Core...")
+
+    boot_sequences = [
+    [
+        "🧭 Setting Sail from East Blue...",
+        "🔍 Scouting the Grand Line routes...",
+        "🏴‍☠️ Crew check done! Straw Hat systems online!",
+        "✅ LUFFY IS READY FOR ADVENTURE! ☠️"
+    ],
+    [
+        "⚙️ Activating Gear 2...",
+        "💨 Speeding up Straw Hat Systems...",
+        "✅ LUFFY READY TO FIGHT! 💥"
+    ]
+
+    [
+        "⚙️ Gear 4: Boundman Engaged...",
+        "🔄 Recoil Boost Active...",
+        "✅ LET'S GO, CREW! 🔥"
+    ],
+    [
+        "⚙️ Gear 5: Nika Mode Loading...",
+        "🌟 Drums of Liberation echo...",
+        "✅ LUFFY IS IN FULL SWING! 🌀"
+    ],
+    [
+        "🌊 Calling Thousand Sunny...",
+        "🎩 Checking Straw Hat integrity...",
+        "✅ LUFFY CREW DEPLOYED! 💫"
+    ],
+    [
+        "⚓ Deploying haki across channels...",
+        "🌀 Summoning LUFFY clones...",
+        "✅ SHISHISHI~ Let's make some trouble! 😎"
+    ],
+    [
+        "🔧 FRANKY’s loading Cola Energy...",
+        "🚀 Docking LUFFY-Bot Systems...",
+        "✅ SUPER BOOT COMPLETE! 🤖"
+    ],
+    [
+        "🔥 SANJI’s Kitchen Prepping...",
+        "🥘 Diable Jambe Cooking in Progress...",
+        "✅ STRAW HATS FED AND READY! 🍖"
+    ],
+    [
+        "🗡️ ZORO is sharpening his blades...",
+        "🌪️ Santoryu Mode Activated...",
+        "✅ NO ONE GETS LOST THIS TIME! 😤"
+    ],
+]
+
+
+
+steps = random.choice(boot_sequences)
+
+# Send the initial boot message
+try:
+    progress = await message.reply("👒 Booting LUFFY File Core...")
+except Exception as e:
+    print(f"Error sending boot message: {e}")
+    return  # Stop execution if message fails
+
+# Loop through each step safely
+for step in steps:
+    await asyncio.sleep(random.uniform(0.5, 1.2))
+    with contextlib.suppress(Exception):
+        await progress.edit(step)
+
+# Try to delete the boot message safely
+await asyncio.sleep(0.5)
+with contextlib.suppress(Exception):
+    await progress.delete()
+
     text = message.text
     if len(text) > 7:
         try:
@@ -69,103 +163,92 @@ async def start_command(client: Client, message: Message):
                 ids = [int(int(argument[1]) / abs(client.db_channel.id))]
             except:
                 return
-        temp_msg = await message.reply("<blockquote>Ara Please wait... 🤭</blockquote>")
+
+        temp_msg = await message.reply("<blockquote>⚡ Ara~ Getting your file ready... Hold tight!</blockquote>")
+
         try:
             messages = await get_messages(client, ids)
         except:
-            await message.reply_text("<blockquote>Ara Something went wrong..! 😰</blockquote>")
+            await message.reply_text("<blockquote>😵‍💫 Something went wrong while fetching your files!</blockquote>")
             return
-        await temp_msg.delete()
 
+        await temp_msg.delete()
         track_msgs = []
 
         for msg in messages:
-            if bool(CUSTOM_CAPTION) & bool(msg.document):
-                caption = CUSTOM_CAPTION.format(previouscaption="" if not msg.caption else msg.caption.html, filename=msg.document.file_name)
-            else:
-                caption = "" if not msg.caption else msg.caption.html
+            caption = CUSTOM_CAPTION.format(previouscaption="" if not msg.caption else msg.caption.html,
+                                            filename=msg.document.file_name) if bool(CUSTOM_CAPTION) and msg.document else (msg.caption.html if msg.caption else "")
 
-            if DISABLE_CHANNEL_BUTTON:
-                reply_markup = msg.reply_markup
-            else:
-                reply_markup = None
+            reply_markup = None if not DISABLE_CHANNEL_BUTTON else msg.reply_markup
 
-            if AUTO_DELETE_TIME and AUTO_DELETE_TIME > 0:
-                try:
-                    copied_msg_for_deletion = await msg.copy(chat_id=message.from_user.id, caption=caption, parse_mode=ParseMode.HTML, reply_markup=reply_markup, protect_content=PROTECT_CONTENT)
-                    if copied_msg_for_deletion:
-                        track_msgs.append(copied_msg_for_deletion)
-                    else:
-                        print("Failed to copy message, skipping.")
-
-                except FloodWait as e:
-                    await asyncio.sleep(e.value)
-                    copied_msg_for_deletion = await msg.copy(chat_id=message.from_user.id, caption=caption, parse_mode=ParseMode.HTML, reply_markup=reply_markup, protect_content=PROTECT_CONTENT)
-                    if copied_msg_for_deletion:
-                        track_msgs.append(copied_msg_for_deletion)
-                    else:
-                        print("Failed to copy message after retry, skipping.")
-
-                except Exception as e:
-                    print(f"Error copying message: {e}")
-                    pass
-            else:
-                try:
-                    await msg.copy(chat_id=message.from_user.id, caption=caption, parse_mode=ParseMode.HTML, reply_markup=reply_markup, protect_content=PROTECT_CONTENT)
-                    await asyncio.sleep(0.5)
-                except FloodWait as e:
-                    await asyncio.sleep(e.value)
-                    await msg.copy(chat_id=message.from_user.id, caption=caption, parse_mode=ParseMode.HTML, reply_markup=reply_markup, protect_content=PROTECT_CONTENT)
-                except:
-                    pass
+            try:
+                copied_msg = await msg.copy(
+                    chat_id=message.from_user.id,
+                    caption=caption,
+                    parse_mode=ParseMode.HTML,
+                    reply_markup=reply_markup,
+                    protect_content=PROTECT_CONTENT
+                )
+                if AUTO_DELETE_TIME and AUTO_DELETE_TIME > 0:
+                    track_msgs.append(copied_msg)
+                await asyncio.sleep(0.5)
+            except FloodWait as e:
+                await asyncio.sleep(e.value)
+                copied_msg = await msg.copy(
+                    chat_id=message.from_user.id,
+                    caption=caption,
+                    parse_mode=ParseMode.HTML,
+                    reply_markup=reply_markup,
+                    protect_content=PROTECT_CONTENT
+                )
+                if AUTO_DELETE_TIME and AUTO_DELETE_TIME > 0:
+                    track_msgs.append(copied_msg)
 
         if track_msgs:
             delete_data = await client.send_message(
                 chat_id=message.from_user.id,
-                text=AUTO_DELETE_MSG.format(time=AUTO_DELETE_TIME)
+                text=AUTO_DELETE_MSG.format(time=AUTO_DELETE_TIME // 60)
             )
-            # Schedule the file deletion task after all messages have been copied
             asyncio.create_task(delete_file(track_msgs, client, delete_data))
-        else:
-            print("No messages to track for deletion.")
+        return
 
-        return
-    else:
-        reply_markup = InlineKeyboardMarkup(
+    # No encoded file - show greeting UI
+    reply_markup = InlineKeyboardMarkup(
+        [
             [
-                [
-                    InlineKeyboardButton("⚡ ΛΒσυτ", callback_data="about"),
-                    InlineKeyboardButton("🍀 Cℓσѕє", callback_data="close")
-                ]
+                InlineKeyboardButton("⚡ Λвσυт", callback_data="about"),
+                InlineKeyboardButton("🍀 Cℓσѕє", callback_data="close")
             ]
+        ]
+    )
+
+    if START_PIC:
+        await message.reply_photo(
+            photo=random.choice(PICS),
+            caption=START_MSG.format(
+                first=message.from_user.first_name,
+                last=message.from_user.last_name,
+                username=None if not message.from_user.username else '@' + message.from_user.username,
+                mention=message.from_user.mention,
+                id=message.from_user.id
+            ),
+            reply_markup=reply_markup,
+            quote=True
         )
-        if START_PIC:  # Check if START_PIC has a value
-            await message.reply_photo(
-                photo=random.choice(PICS),
-                caption=START_MSG.format(
-                    first=message.from_user.first_name,
-                    last=message.from_user.last_name,
-                    username=None if not message.from_user.username else '@' + message.from_user.username,
-                    mention=message.from_user.mention,
-                    id=message.from_user.id
-                ),
-                reply_markup=reply_markup,
-                quote=True  # Removed invalid message_effect_id
-            )
-        else:  # If START_PIC is empty, send only the text
-            await message.reply_text(
-                text=START_MSG.format(
-                    first=message.from_user.first_name,
-                    last=message.from_user.last_name,
-                    username=None if not message.from_user.username else '@' + message.from_user.username,
-                    mention=message.from_user.mention,
-                    id=message.from_user.id
-                ),
-                reply_markup=reply_markup,
-                disable_web_page_preview=True,
-                quote=True
-            )
-        return
+    else:
+        await message.reply_text(
+            text=START_MSG.format(
+                first=message.from_user.first_name,
+                last=message.from_user.last_name,
+                username=None if not message.from_user.username else '@' + message.from_user.username,
+                mention=message.from_user.mention,
+                id=message.from_user.id
+            ),
+            reply_markup=reply_markup,
+            disable_web_page_preview=True,
+            quote=True
+        )
+
 
 
 
