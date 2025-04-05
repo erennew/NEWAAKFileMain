@@ -95,7 +95,7 @@ AUTO_DEL_SUCCESS_MSG = os.environ.get(
     "⚡ Straw Hat LUFFY reporting:\nFile deleted with a Gomu Gomu no Slam! 💥🌀🗑️\nCatch ya later, nakama! 👒🏴‍☠️"
 )
 reply = await message.reply(AUTO_DEL_SUCCESS_MSG)
-await auto_delete(reply, message)
+    await auto_delete(reply, message)
 
 
 
