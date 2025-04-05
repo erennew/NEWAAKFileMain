@@ -39,7 +39,7 @@ FORCE_SUB_CHANNEL_4 = int(os.environ.get("FORCE_SUB_CHANNEL_4", "-1002508438247"
 
 TG_BOT_WORKERS = int(os.environ.get("TG_BOT_WORKERS", "4"))
 TIME_WINDOW = int(os.getenv("TIME_WINDOW", 60))  # e.g. 60 seconds
-MAX_REQUESTS = int(os.getenv("MAX_REQUESTS", 3))  # e.g. 3 requests per TIME_WINDOW
+MAX_REQUESTS = int(os.getenv("MAX_REQUESTS", 5))  # e.g. 3 requests per TIME_WINDOW
 
 #start message
 START_PIC = os.environ.get("START_PIC","")
