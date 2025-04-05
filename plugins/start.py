@@ -49,16 +49,16 @@ async def start_command(client: Client, message: Message):
 
     hour = datetime.now().hour
     if hour >= 22 or hour < 6:
-        await message.reply("🌙 Ara Ara~ It’s sleepy hours, but LUFFY's still awake to guard your files! 🛌👒")
-
+        await reply_with_clean("🌙 Ara Ara~ It’s sleepy hours, but LUFFY's still awake to guard your files! 🛌👒")
+	
     # Rate limit check
     now = time.time()
     reqs = user_rate_limit.get(id, [])
     reqs = [t for t in reqs if now - t < TIME_WINDOW]
     if len(reqs) >= MAX_REQUESTS:
         wait_time = int(TIME_WINDOW - (now - reqs[0]))
-        return await message.reply(f"⚠️ Slow down, nakama! You're too fast for LUFFY! Wait a bit and try again~ 💤\n\nTry again in <b>{wait_time}</b> seconds. 🐢")
-
+        await reply_with_clean(f"⚠️ Slow down, nakama! You're too fast for LUFFY! Wait a bit and try again~ 💤\n\nTry again in <b>{wait_time}</b> seconds. 🐢")
+	
 
     reqs.append(now)
     user_rate_limit[id] = reqs
@@ -245,6 +245,7 @@ async def start_command(client: Client, message: Message):
             reply_markup=reply_markup,
             quote=True
         )
+	await auto_delete(reply, message)
     else:
         await message.reply_text(
             text=START_MSG.format(
@@ -258,7 +259,7 @@ async def start_command(client: Client, message: Message):
             disable_web_page_preview=True,
             quote=True
         )
-
+	
 
 
 
@@ -344,7 +345,7 @@ async def send_text(client: Bot, message: Message):
         deleted = 0
         unsuccessful = 0
 
-        pls_wait = await message.reply("<i><blockquote>Broadcasting Message.. This will Take Some Time</blockquote></i>")
+        pls_wait = await reply_with_clean("<i><blockquote>Broadcasting Message.. This will Take Some Time</blockquote></i>")
         for chat_id in query:
             try:
                 await broadcast_msg.copy(chat_id)
@@ -375,7 +376,24 @@ Unsuccessful: <code>{unsuccessful}</code></b>"""
         return await pls_wait.edit(status)
 
     else:
-        msg = await message.reply(REPLY_ERROR)
+        msg = await reply_with_clean(REPLY_ERROR)
         await asyncio.sleep(8)
         await msg.delete()
+# 🧹 Auto delete helper
+async def auto_delete(msg, user_msg=None):
+    from config import AUTO_CLEAN, DELETE_DELAY
+    import asyncio
+    if AUTO_CLEAN:
+        await asyncio.sleep(DELETE_DELAY)
+        try:
+            await msg.delete()
+            if user_msg:
+                await user_msg.delete()
+        except:
+            pass
 
+# Global reply function with auto-clean
+async def reply_with_clean(message, text, **kwargs):
+    reply = await message.reply(text, **kwargs)
+    await auto_delete(reply, message)
+    return reply
