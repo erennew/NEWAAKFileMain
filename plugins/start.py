@@ -110,7 +110,7 @@ async def start_command(client: Client, message: Message):
         "🗡️ ZORO is sharpening his blades...",
         "🌪️ Santoryu Mode Activated...",
         "✅ NO ONE GETS LOST THIS TIME! 😤"
-    ],
+    ]
 ]
 
 
