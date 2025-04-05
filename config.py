@@ -70,7 +70,8 @@ PROTECT_CONTENT = False if os.environ.get('PROTECT_CONTENT', "True") == "True" e
 # Auto delete time in seconds.
 # Auto delete time set to 15 minutes (900 seconds)
 AUTO_DELETE_TIME = int(os.getenv("AUTO_DELETE_TIME", "900"))
-
+AUTO_CLEAN = os.getenv("AUTO_CLEAN", "False").lower() == "true"
+DELETE_DELAY = int(os.getenv("DELETE_DELAY", 10))
 # Convert to human-readable format
 minutes = AUTO_DELETE_TIME // 60
 seconds = AUTO_DELETE_TIME % 60
