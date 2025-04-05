@@ -74,7 +74,7 @@ async def start_command(client: Client, message: Message):
         "⚙️ Activating Gear 2...",
         "💨 Speeding up Straw Hat Systems...",
         "✅ LUFFY READY TO FIGHT! 💥"
-    ]
+    ],
 
     [
         "⚙️ Gear 4: Boundman Engaged...",
@@ -115,20 +115,20 @@ async def start_command(client: Client, message: Message):
 
 
 
-steps = random.choice(boot_sequences)
+      steps = random.choice(boot_sequences)
 
-# Send the initial boot message
-try:
-    progress = await message.reply("👒 Booting LUFFY File Core...")
-except Exception as e:
-    print(f"Error sending boot message: {e}")
-    return  # Stop execution if message fails
-
-# Loop through each step safely
-for step in steps:
-    await asyncio.sleep(random.uniform(0.5, 1.2))
-    with contextlib.suppress(Exception):
-        await progress.edit(step)
+	# Send the initial boot message
+      try:
+	    progress = await message.reply("👒 Booting LUFFY File Core...")
+      except Exception as e:
+	    print(f"Error sending boot message: {e}")
+	    return  # Stop execution if message fails
+	
+	# Loop through each step safely
+      for step in steps:
+	    await asyncio.sleep(random.uniform(0.5, 1.2))
+	    with contextlib.suppress(Exception):
+	        await progress.edit(step)
 
 # Try to delete the boot message safely
 await asyncio.sleep(0.5)
