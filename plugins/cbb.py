@@ -12,7 +12,7 @@ async def cb_handler(client: Bot, query: CallbackQuery):
         await query.message.edit_text(
             text = (
                 "<b><blockquote>☠️ LUFFY’S MAP ☠️\n\n"
-                "👒 ᴄᴀᴘᴛᴀɪɴ : <a href='https://t.me/CulturedTeluguWeebBot'>ʀᴀᴠɪ ᴅᴏɴ!</a>\n"
+                "👒 ᴄᴀᴘᴛᴀɪɴ : <a href='https://t.me/CulturedTeluguWeebBot'>ʀᴀᴠɪ</a>\n"
                 "🏴‍☠️ ᴍᴀɪɴ ɪꜱʟᴀɴᴅ : <a href='https://t.me/CulturedTeluguweeb'>ᴄᴜʟᴛᴜʀᴇᴅ ᴡᴇᴇʙ</a>\n"
                 "📺 ᴄᴜʀʀᴇɴᴛ ᴀɴɪᴍᴇ ᴍɪssɪᴏɴ : <a href='https://t.me/+BiVvkpD5ieIxZTNl'>ᴄᴛᴡ ᴏɴɢᴏɪɴɢ</a>\n"
                 "🗣️ ᴘɪʀᴀᴛᴇ ᴛᴀʟᴋs : <a href='https://t.me/+IIgB6RgivTI2NzA1'>ᴄᴜʟᴛᴜʀᴇᴅ ᴡᴇᴇʙꜱ</a>"
