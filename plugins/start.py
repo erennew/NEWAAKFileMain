@@ -139,34 +139,34 @@ async def start_command(client: Client, message: Message):
                 ]
             ]
         )
-        if START_PIC:  # Check if START_PIC has a value
-            await message.reply_photo(
-            photo = random.choice(PICS),
-            caption = START_MSG.format(
-                first = message.from_user.first_name,
-                last = message.from_user.last_name,
-                username = None if not message.from_user.username else '@' + message.from_user.username,
-                mention = message.from_user.mention,
-                id = message.from_user.id
-            ),
-            reply_markup = reply_markup,
-	        message_effect_id=5104841245755180586, #
-              quote=True
-            )
-        else:  # If START_PIC is empty, send only the text
-            await message.reply_text(
-                text=START_MSG.format(
-                    first=message.from_user.first_name,
-                    last=message.from_user.last_name,
-                    username=None if not message.from_user.username else '@' + message.from_user.username,
-                    mention=message.from_user.mention,
-                    id=message.from_user.id
-                ),
-                reply_markup=reply_markup,
-                disable_web_page_preview=True,
-                quote=True
-            )
-        return
+	       if START_PIC:  # Check if START_PIC has a value
+	    await message.reply_photo(
+	        photo=random.choice(PICS),
+	        caption=START_MSG.format(
+	            first=message.from_user.first_name,
+	            last=message.from_user.last_name,
+	            username=None if not message.from_user.username else '@' + message.from_user.username,
+	            mention=message.from_user.mention,
+	            id=message.from_user.id
+	        ),
+	        reply_markup=reply_markup,
+	        quote=True
+	    )
+	else:  # If START_PIC is empty, send only the text
+	    await message.reply_text(
+	        text=START_MSG.format(
+	            first=message.from_user.first_name,
+	            last=message.from_user.last_name,
+	            username=None if not message.from_user.username else '@' + message.from_user.username,
+	            mention=message.from_user.mention,
+	            id=message.from_user.id
+	        ),
+	        reply_markup=reply_markup,
+	        disable_web_page_preview=True,
+	        quote=True
+	    )
+	return
+
 
 
 # =====================================================================================##
