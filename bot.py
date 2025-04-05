@@ -16,21 +16,28 @@ class Bot(Client):
             name="Bot",
             api_hash=API_HASH,
             api_id=APP_ID,
-            plugins={
-                "root": "plugins"
-            },
+            plugins={"root": "plugins"},
             workers=TG_BOT_WORKERS,
             bot_token=TG_BOT_TOKEN
         )
         self.LOGGER = LOGGER
 
-    async def start(self, use_qr: bool = False, except_ids: list = None):
+    async def start(self):
+        self.LOGGER(__name__).info("🚀 Starting bot initialization...")
         await super().start()
-        self.uptime = datetime.now()  # ✅ Store the bot's start time
-        self.me = await self.get_me()  # ✅ Get bot info and store it
-        print(f"Bot started as @{self.me.username} at {self.uptime}")  # ✅ Helpful debug print
+        self.uptime = datetime.now()
 
+        try:
+            usr_bot_me = await self.get_me()
+            if usr_bot_me is None:
+                raise Exception("get_me() returned None. Invalid BOT_TOKEN?")
+            self.username = usr_bot_me.username
+        except Exception as e:
+            self.LOGGER(__name__).error(f"❌ Failed to fetch bot info using get_me(): {e}")
+            self.LOGGER(__name__).info("Make sure your TG_BOT_TOKEN is valid and the bot is not blocked.")
+            sys.exit()
 
+        # Force Sub Channel 1
         if FORCE_SUB_CHANNEL_1:
             try:
                 link = (await self.get_chat(FORCE_SUB_CHANNEL_1)).invite_link
@@ -44,6 +51,8 @@ class Bot(Client):
                 self.LOGGER(__name__).warning(f"Please Double check the FORCE_SUB_CHANNEL_1 value and Make sure Bot is Admin in channel with Invite Users via Link Permission, Current Force Sub Channel Value: {FORCE_SUB_CHANNEL_1}")
                 self.LOGGER(__name__).info("\nBot Stopped. Join https://t.me/weebs_support for support")
                 sys.exit()
+
+        # Force Sub Channel 2
         if FORCE_SUB_CHANNEL_2:
             try:
                 link = (await self.get_chat(FORCE_SUB_CHANNEL_2)).invite_link
@@ -57,6 +66,8 @@ class Bot(Client):
                 self.LOGGER(__name__).warning(f"Please Double check the FORCE_SUB_CHANNEL_2 value and Make sure Bot is Admin in channel with Invite Users via Link Permission, Current Force Sub Channel Value: {FORCE_SUB_CHANNEL_2}")
                 self.LOGGER(__name__).info("\nBot Stopped. Join https://t.me/weebs_support for support")
                 sys.exit()
+
+        # Force Sub Channel 3
         if FORCE_SUB_CHANNEL_3:
             try:
                 link = (await self.get_chat(FORCE_SUB_CHANNEL_3)).invite_link
@@ -70,6 +81,8 @@ class Bot(Client):
                 self.LOGGER(__name__).warning(f"Please Double check the FORCE_SUB_CHANNEL_3 value and Make sure Bot is Admin in channel with Invite Users via Link Permission, Current Force Sub Channel Value: {FORCE_SUB_CHANNEL_3}")
                 self.LOGGER(__name__).info("\nBot Stopped. Join https://t.me/weebs_support for support")
                 sys.exit()
+
+        # Force Sub Channel 4
         if FORCE_SUB_CHANNEL_4:
             try:
                 link = (await self.get_chat(FORCE_SUB_CHANNEL_4)).invite_link
@@ -83,10 +96,12 @@ class Bot(Client):
                 self.LOGGER(__name__).warning(f"Please Double check the FORCE_SUB_CHANNEL_4 value and Make sure Bot is Admin in channel with Invite Users via Link Permission, Current Force Sub Channel Value: {FORCE_SUB_CHANNEL_4}")
                 self.LOGGER(__name__).info("\nBot Stopped. Join https://t.me/weebs_support for support")
                 sys.exit()
+
+        # DB Channel Check
         try:
             db_channel = await self.get_chat(CHANNEL_ID)
             self.db_channel = db_channel
-            test = await self.send_message(chat_id = db_channel.id, text = "Test Message")
+            test = await self.send_message(chat_id=db_channel.id, text="Test Message")
             await test.delete()
         except Exception as e:
             self.LOGGER(__name__).warning(e)
@@ -96,9 +111,7 @@ class Bot(Client):
 
         self.set_parse_mode(ParseMode.HTML)
         self.LOGGER(__name__).info(f"Bot Running..!\n\nCreated by \nhttps://t.me/WeekendsBotz")
-        self.LOGGER(__name__).info(f"""       
-
-
+        self.LOGGER(__name__).info(r"""       
   ┈┈┈╱▔▔▔▔▔▔╲┈╭━━━━━━━╮┈┈
 ┈┈▕┈╭━╮╭━╮┈▏┃𝕎𝕖𝕖𝕜𝕖𝕟𝕕𝕤𝔹𝕠𝕥𝕫
 ┈┈▕┈┃╭╯╰╮┃┈▏╰┳━━━━━━╯┈┈
@@ -106,11 +119,9 @@ class Bot(Client):
 ┈┈▕┈┈┈┃┃┈┈┈▏━╯┈┈┈┈┈
 ┈┈▕┈┈┈╰╯┈┈┈▏┈┈┈┈┈┈┈
 ┈┈▕╱╲╱╲╱╲╱╲▏┈┈┈┈┈┈┈
-                                                         
- 
-                                          """)
-        self.username = usr_bot_me.username
-        #web-response
+        """)
+
+        # Start web server
         app = web.AppRunner(await web_server())
         await app.setup()
         bind_address = "0.0.0.0"
