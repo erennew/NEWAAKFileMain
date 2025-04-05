@@ -217,8 +217,8 @@ with contextlib.suppress(Exception):
     reply_markup = InlineKeyboardMarkup(
         [
             [
-                InlineKeyboardButton("⚡ Λвσυт", callback_data="about"),
-                InlineKeyboardButton("🍀 Cℓσѕє", callback_data="close")
+                InlineKeyboardButton("📜 Pirate Log", callback_data="about"),
+                InlineKeyboardButton("🗺️ Close Map", callback_data="close")
             ]
         ]
     )
