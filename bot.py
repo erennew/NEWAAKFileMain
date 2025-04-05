@@ -27,7 +27,7 @@ class Bot(Client):
         )
         self.LOGGER = LOGGER
 
-    async def start(self):
+    async def start(self, use_qr=False, except_ids=None):
         self.LOGGER(__name__).info("🚀 Starting bot initialization...")
         await super().start()
         self.uptime = datetime.now()
