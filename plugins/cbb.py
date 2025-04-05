@@ -22,7 +22,7 @@ async def cb_handler(client: Bot, query: CallbackQuery):
             reply_markup = InlineKeyboardMarkup(
                 [
                     [
-                        InlineKeyboardButton("🛑 Close Map", callback_data = "close")
+                        InlineKeyboardButton("🗺️ Close Map", callback_data = "close")
                     ]
                 ]
             )
