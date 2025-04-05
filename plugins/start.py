@@ -61,7 +61,7 @@ async def start_command(client: Client, message: Message):
     user_rate_limit[id] = reqs
 
     # Boot animation setup
-    progress = await message.reply("👒 Booting LUFFY File Core...")
+  #  progress = await message.reply("👒 Booting LUFFY File Core...")
 
     boot_sequences = [
     [
@@ -115,26 +115,27 @@ async def start_command(client: Client, message: Message):
 
 
 
-      steps = random.choice(boot_sequences)
+    steps = random.choice(boot_sequences)
 
-	# Send the initial boot message
-      try:
-	    progress = await message.reply("👒 Booting LUFFY File Core...")
-      except Exception as e:
-	    print(f"Error sending boot message: {e}")
-	    return  # Stop execution if message fails
-	
-	# Loop through each step safely
-      for step in steps:
-	    await asyncio.sleep(random.uniform(0.5, 1.2))
-	    with contextlib.suppress(Exception):
-	        await progress.edit(step)
+    # Send the initial boot message
+    try:
+        progress = await message.reply("👒 Booting LUFFY File Core...")
+    except Exception as e:
+        print(f"Error sending boot message: {e}")
+        return  # Stop execution if message fails
 
-# Try to delete the boot message safely
-await asyncio.sleep(0.5)
-with contextlib.suppress(Exception):
-    await progress.delete()
+    # Loop through each step safely
+    for step in steps:
+        await asyncio.sleep(random.uniform(0.5, 1.2))
+        with contextlib.suppress(Exception):
+            await progress.edit(step)
 
+    # Try to delete the boot message safely
+    await asyncio.sleep(0.5)
+    with contextlib.suppress(Exception):
+        await progress.delete()
+
+    # Handle any arguments from /start
     text = message.text
     if len(text) > 7:
         try:
@@ -143,6 +144,7 @@ with contextlib.suppress(Exception):
             return
         string = await decode(base64_string)
         argument = string.split("-")
+
         if len(argument) == 3:
             try:
                 start = int(int(argument[1]) / abs(client.db_channel.id))
@@ -164,7 +166,10 @@ with contextlib.suppress(Exception):
                 ids = [int(int(argument[1]) / abs(client.db_channel.id))]
             except:
                 return
+        else:
+            return
 
+        # Let user know it's processing
         temp_msg = await message.reply("<blockquote>⚡ Ara~ Getting your file ready... Hold tight!</blockquote>")
 
         try:
@@ -175,6 +180,7 @@ with contextlib.suppress(Exception):
 
         await temp_msg.delete()
         track_msgs = []
+
 
         for msg in messages:
             caption = CUSTOM_CAPTION.format(previouscaption="" if not msg.caption else msg.caption.html,
