@@ -54,7 +54,8 @@ async def start_command(client: Client, message: Message):
     reqs = [t for t in reqs if now - t < TIME_WINDOW]
     if len(reqs) >= MAX_REQUESTS:
         wait_time = int(TIME_WINDOW - (now - reqs[0]))
-        return await message.reply(f"⚠️ Slow down, nakama! You're too fast for LUFFY!
+        return await message.reply(f"⚠️ Slow down, nakama! You're too fast for LUFFY! Wait a bit and try again~ 💤")
+
 Try again in <b>{wait_time}</b> seconds. 🐢")
     reqs.append(now)
     user_rate_limit[id] = reqs
