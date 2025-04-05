@@ -40,7 +40,7 @@ FORCE_SUB_CHANNEL_4 = int(os.environ.get("FORCE_SUB_CHANNEL_4", "-1002508438247"
 TG_BOT_WORKERS = int(os.environ.get("TG_BOT_WORKERS", "4"))
 
 #start message
-START_PIC = os.environ.get("START_PIC","https://envs.sh/nA8.jpg")
+START_PIC = os.environ.get("START_PIC","")
 START_MSG = os.environ.get("START_MESSAGE", "ᴋᴏɴɪᴄʜɪᴡᴀ {mention}\n\n<blockquote>ᴋᴏɴɪᴄʜɪᴡᴀ ɪ ᴄᴀɴ sᴛᴏʀᴇ ᴀɴɪᴍᴇ/ᴍᴏᴠɪᴇ ғɪʟᴇs ɪɴ @CulturedTeluguweeb ᴄʜᴀɴɴᴇʟ  ᴀɴᴅ ᴏᴛʜᴇʀ ᴜsᴇʀs ᴄᴀɴ ᴀᴄᴄᴇss ɪᴛ ғʀᴏᴍ sᴘᴇᴄɪᴀʟ ʟɪɴᴋ.</blockquote>")
 try:
     ADMINS=[]
@@ -50,7 +50,7 @@ except ValueError:
         raise Exception("Your Admins list does not contain valid integers.")
 
 #Force sub message 
-FORCE_PIC = os.environ.get("FORCE_PIC", "https://envs.sh/KTy.jpg")
+FORCE_PIC = os.environ.get("FORCE_PIC", "")
 
 FORCE_MSG = os.environ.get("FORCE_SUB_MESSAGE", "ᴀʀᴀ ᴀʀᴀ!! {mention}\n\n<b><blockquote>ᴀʀᴀ ʏᴏᴜ'ʀᴇ ᴍɪssɪɴɢ ᴏᴜᴛ ᴏɴ sᴏᴍᴇ sᴇʀɪᴏᴜs ᴀᴄᴛɪᴏɴ.ᴛo ᴜɴʟᴏᴄᴋ ᴀʟʟ ғᴇᴀᴛᴜʀᴇs ᴀɴᴅ ᴀᴄᴄᴇss ғɪʟᴇs, ᴊᴏɪɴ ᴀʟʟ of ᴏᴜʀ ᴄʜᴀɴɴᴇʟs ʙᴇʟᴏᴡ: !</blockquote></b>")
 
@@ -63,9 +63,32 @@ PICS = (os.environ.get("PICS", "https://envs.sh/sJX.jpg https://envs.sh/Uc0.jpg 
 PROTECT_CONTENT = False if os.environ.get('PROTECT_CONTENT', "True") == "True" else False
 
 # Auto delete time in seconds.
-AUTO_DELETE_TIME = int(os.getenv("AUTO_DELETE_TIME", "1000"))
-AUTO_DELETE_MSG = os.environ.get("AUTO_DELETE_MSG", "⚠️ Dᴜᴇ ᴛᴏ Cᴏᴘʏʀɪɢʜᴛ ɪssᴜᴇs....\n\n<blockquote>This file will be automatically deleted in {time} seconds. Please ensure you have saved any necessary content before this time.</blockquote>")
-AUTO_DEL_SUCCESS_MSG = os.environ.get("AUTO_DEL_SUCCESS_MSG", "<blockquote>уσυя fιℓє нαѕ вєєи ѕυccєѕѕfυℓℓу ∂єℓєтє∂! ♻️</blockquote>")
+# Auto delete time set to 15 minutes (900 seconds)
+AUTO_DELETE_TIME = int(os.getenv("AUTO_DELETE_TIME", "900"))
+
+# Convert to human-readable format
+minutes = AUTO_DELETE_TIME // 60
+seconds = AUTO_DELETE_TIME % 60
+
+if minutes > 0:
+    AUTO_DELETE_HUMAN = f"{minutes} minute{'s' if minutes != 1 else ''} {seconds} second{'s' if seconds != 1 else ''}"
+else:
+    AUTO_DELETE_HUMAN = f"{seconds} second{'s' if seconds != 1 else ''}"
+
+# Message shown before auto-deletion
+AUTO_DELETE_MSG = os.environ.get(
+    "AUTO_DELETE_MSG",
+    f"⚠️ Dᴜᴇ ᴛᴏ Cᴏᴘʏʀɪɢʜᴛ ɪssᴜᴇs....\n\n"
+    f"<blockquote>This file will be automatically deleted in {AUTO_DELETE_HUMAN}. "
+    f"Please ensure you have saved any necessary content before this time.</blockquote>"
+)
+
+# Message shown after deletion
+AUTO_DEL_SUCCESS_MSG = os.environ.get(
+    "AUTO_DEL_SUCCESS_MSG",
+    "<blockquote>уσυя fιℓє нαѕ вєєи ѕυccєѕѕfυℓℓу ∂єℓєтє∂! ♻️</blockquote>"
+)
+
 
 #Set true if you want Disable your Channel Posts Share button
 DISABLE_CHANNEL_BUTTON = os.environ.get("DISABLE_CHANNEL_BUTTON", None) == 'False'
