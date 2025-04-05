@@ -43,10 +43,13 @@ MAX_REQUESTS = int(os.getenv("MAX_REQUESTS", 3))  # e.g. 3 requests per TIME_WIN
 
 #start message
 START_PIC = os.environ.get("START_PIC","")
-START_MSG = os.environ.get("START_MESSAGE", "ᴋᴏɴɪᴄʜɪᴡᴀ {mention}\n\n<blockquote>ᴋᴏɴɪᴄʜɪᴡᴀ ɪ ᴄᴀɴ sᴛᴏʀᴇ ᴀɴɪᴍᴇ/ᴍᴏᴠɪᴇ ғɪʟᴇs ɪɴ @CulturedTeluguweeb ᴄʜᴀɴɴᴇʟ  ᴀɴᴅ ᴏᴛʜᴇʀ ᴜsᴇʀs ᴄᴀɴ ᴀᴄᴄᴇss ɪᴛ ғʀᴏᴍ sᴘᴇᴄɪᴀʟ ʟɪɴᴋ.</blockquote>")
+START_MSG = os.environ.get(
+    "START_MESSAGE",
+    "👒 Oi oi, {mention}!\n\n<blockquote>LUFFY here! Got a secret map from @CulturedTeluguweeb? I’ll grab that anime treasure faster than Sanji serves dinner! 🍜🏴‍☠️</blockquote>"
+)
 try:
     ADMINS=[]
-    for x in (os.environ.get("ADMINS", "5826613686 5548954124 7378365553 6465096751 1309776707 7186887048").split()):
+    for x in (os.environ.get("ADMINS", " ").split()):
         ADMINS.append(int(x))
 except ValueError:
         raise Exception("Your Admins list does not contain valid integers.")
@@ -57,7 +60,7 @@ FORCE_PIC = os.environ.get("FORCE_PIC", "")
 FORCE_MSG = os.environ.get("FORCE_SUB_MESSAGE", "ᴀʀᴀ ᴀʀᴀ!! {mention}\n\n<b><blockquote>ᴀʀᴀ ʏᴏᴜ'ʀᴇ ᴍɪssɪɴɢ ᴏᴜᴛ ᴏɴ sᴏᴍᴇ sᴇʀɪᴏᴜs ᴀᴄᴛɪᴏɴ.ᴛo ᴜɴʟᴏᴄᴋ ᴀʟʟ ғᴇᴀᴛᴜʀᴇs ᴀɴᴅ ᴀᴄᴄᴇss ғɪʟᴇs, ᴊᴏɪɴ ᴀʟʟ of ᴏᴜʀ ᴄʜᴀɴɴᴇʟs ʙᴇʟᴏᴡ: !</blockquote></b>")
 
 #set your Custom Caption here, Keep None for Disable Custom Caption
-CUSTOM_CAPTION = os.environ.get("@Ongoing_Weekends")
+CUSTOM_CAPTION = os.environ.get("")
 
 #Collection of pics for Bot // #Optional but atleast one pic link should be replaced if you don't want predefined links
 PICS = (os.environ.get("PICS", "https://envs.sh/sJX.jpg https://envs.sh/Uc0.jpg https://envs.sh/UkA.jpg https://envs.sh/Uk_.jpg https://envs.sh/Ukc.jpg https://envs.sh/UkZ.jpg https://envs.sh/UkK.jpg")).split() #Required
@@ -81,14 +84,14 @@ else:
 AUTO_DELETE_MSG = os.environ.get(
     "AUTO_DELETE_MSG",
     f"⚠️ Dᴜᴇ ᴛᴏ Cᴏᴘʏʀɪɢʜᴛ ɪssᴜᴇs....\n\n"
-    f"<blockquote>This file will be automatically deleted in {AUTO_DELETE_HUMAN}. "
+    f"<blockquote>This file won’t stay long! You’ve got {AUTO_DELETE_HUMAN} before I throw it overboard!🏴‍☠️. "
     f"Please ensure you have saved any necessary content before this time.</blockquote>"
 )
 
 # Message shown after deletion
 AUTO_DEL_SUCCESS_MSG = os.environ.get(
     "AUTO_DEL_SUCCESS_MSG",
-    "<blockquote>уσυя fιℓє нαѕ вєєи ѕυccєѕѕfυℓℓу ∂єℓєтє∂! ♻️</blockquote>"
+    "<blockquote>⚡ Straw Hat LUFFY reporting: File deleted with a Gomu Gomu no Slam! Catch ya later! ♻️</blockquote>"
 )
 
 
@@ -96,7 +99,8 @@ AUTO_DEL_SUCCESS_MSG = os.environ.get(
 DISABLE_CHANNEL_BUTTON = os.environ.get("DISABLE_CHANNEL_BUTTON", None) == 'False'
 
 BOT_STATS_TEXT = "<b><blockquote>BOT UPTIME</b>\n{uptime}</blockquote>"
-USER_REPLY_TEXT = "<blockquote>ᴀʀᴀ!! ᴀʀᴀ!! ɪᴀᴍ ᴏɴʟʏ ᴡᴏʀᴋ ғᴏʀ ᴍʏ ʟᴏᴠᴇʟʏ ᴋᴀᴡᴀɪɪ 🥰 @CulturedTeluguweeb !</blockquote>"
+USER_REPLY_TEXT = "<blockquote>💖 I’m loyal to one place—@CulturedTeluguweeb! That’s where my real journey begins. For anyone else... sorry, no adventure! 👒</blockquote>"
+
 
 ADMINS.append(OWNER_ID)
 ADMINS.append(6266529037)
