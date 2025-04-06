@@ -1,4 +1,4 @@
-# (©) WeekendsBotz
+# (©) RaviBots (Originally: WeekendsBotz)
 import os
 import logging
 from dotenv import load_dotenv
@@ -7,54 +7,53 @@ from logging.handlers import RotatingFileHandler
 load_dotenv()
 
 # ===== Bot Configuration ===== #
-TG_BOT_TOKEN = os.environ.get("TG_BOT_TOKEN", "7988129609:AAHIJGSZm2-Ryso22AR4X5s05ZF-HaMmfuc")
-APP_ID = int(os.environ.get("APP_ID", 24500584))
-API_HASH = os.environ.get("API_HASH", "449da69cf4081dc2cc74eea828d0c490")
-OWNER_ID = int(os.environ.get("OWNER_ID", 1047253913))
+TG_BOT_TOKEN = os.environ.get("TG_BOT_TOKEN", "")
+APP_ID = int(os.environ.get("APP_ID", 12345))
+API_HASH = os.environ.get("API_HASH", "")
+OWNER_ID = int(os.environ.get("OWNER_ID", 123456789))
 
 # ===== Database Configuration ===== #
-CHANNEL_ID = int(os.environ.get("CHANNEL_ID", -1002448203068))
-DB_URI = os.environ.get("DATABASE_URL", "mongodb+srv://chattaravikiran2001:6nJQC6pb3wLf1zCu@cluster1.daxfzgr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster1")
-DB_NAME = os.environ.get("DATABASE_NAME", "Cluster1")
+CHANNEL_ID = int(os.environ.get("CHANNEL_ID", 0))
+DB_URI = os.environ.get("DATABASE_URL", "")
+DB_NAME = os.environ.get("DATABASE_NAME", "RaviBotsDB")
 
 # ===== Force Subscription Settings ===== #
-JOIN_REQUEST_ENABLE = bool(os.environ.get("JOIN_REQUEST_ENABLED", False))
-FORCE_SUB_CHANNEL_1 = int(os.environ.get("FORCE_SUB_CHANNEL_1", 0)) if os.environ.get("-1002650862527") else None
-FORCE_SUB_CHANNEL_2 = int(os.environ.get("FORCE_SUB_CHANNEL_2", 0)) if os.environ.get("-1002331321194") else None
-FORCE_SUB_CHANNEL_3 = int(os.environ.get("FORCE_SUB_CHANNEL_3", 0)) if os.environ.get("-1001956677010") else None
-FORCE_SUB_CHANNEL_4 = int(os.environ.get("FORCE_SUB_CHANNEL_4", 0)) if os.environ.get("-1002244170363") else None
+JOIN_REQUEST_ENABLE = os.environ.get("JOIN_REQUEST_ENABLED", "False").lower() == "true"
+
+FORCE_SUB_CHANNEL_1 = int(os.environ.get("FORCE_SUB_CHANNEL_1", 0))
+FORCE_SUB_CHANNEL_2 = int(os.environ.get("FORCE_SUB_CHANNEL_2", 0))
+FORCE_SUB_CHANNEL_3 = int(os.environ.get("FORCE_SUB_CHANNEL_3", 0))
+FORCE_SUB_CHANNEL_4 = int(os.environ.get("FORCE_SUB_CHANNEL_4", 0))
 
 # ===== Bot Performance Settings ===== #
 TG_BOT_WORKERS = int(os.environ.get("TG_BOT_WORKERS", 4))
 PORT = os.environ.get("PORT", "8080")
 
 # ===== Rate Limiting Configuration ===== #
-TIME_WINDOW = int(os.getenv("TIME_WINDOW", 60))  # 60 seconds
-MAX_REQUESTS = int(os.getenv("MAX_REQUESTS", 5))  # 5 requests per TIME_WINDOW
-GLOBAL_REQUESTS = int(os.getenv("GLOBAL_REQUESTS", 30))  # 30 requests globally
-GLOBAL_TIME_WINDOW = int(os.getenv("GLOBAL_TIME_WINDOW", 60))  # in 60 seconds
-USER_REQUESTS = int(os.getenv("USER_REQUESTS", 3))  # 3 per TIME_WINDOW
+TIME_WINDOW = int(os.getenv("TIME_WINDOW", 60))
+MAX_REQUESTS = int(os.getenv("MAX_REQUESTS", 5))
+GLOBAL_REQUESTS = int(os.getenv("GLOBAL_REQUESTS", 30))
+GLOBAL_TIME_WINDOW = int(os.getenv("GLOBAL_TIME_WINDOW", 60))
+USER_REQUESTS = int(os.getenv("USER_REQUESTS", 3))
 
 # ===== Flood Control Settings ===== #
-FLOOD_MAX_REQUESTS = int(os.getenv("FLOOD_MAX_REQUESTS", 5))  # Requests per...
-FLOOD_TIME_WINDOW = int(os.getenv("FLOOD_TIME_WINDOW", 10))  # ...10 seconds
-FLOOD_COOLDOWN = int(os.getenv("FLOOD_COOLDOWN", 30))     # 30s ban for spammers
+FLOOD_MAX_REQUESTS = int(os.getenv("FLOOD_MAX_REQUESTS", 5))
+FLOOD_TIME_WINDOW = int(os.getenv("FLOOD_TIME_WINDOW", 10))
+FLOOD_COOLDOWN = int(os.getenv("FLOOD_COOLDOWN", 30))
 
 # ===== Boot Animation Settings ===== #
-BOOT_DELAY = float(os.getenv("BOOT_DELAY", 0.8))  # Seconds between boot messages
-MIN_BOOT_STEPS = int(os.getenv("MIN_BOOT_STEPS", 3))  # Minimum steps to show
+BOOT_DELAY = float(os.getenv("BOOT_DELAY", 0.8))
+MIN_BOOT_STEPS = int(os.getenv("MIN_BOOT_STEPS", 3))
 
 # ===== Message Configurations ===== #
 START_PIC = os.environ.get("START_PIC", "")
-START_MSG = os.environ.get(
-    "START_MESSAGE",
+START_MSG = os.environ.get("START_MESSAGE", 
     "👒 Oi oi, {mention}!\n\n<blockquote>LUFFY here! Got a secret map from @CulturedTeluguweeb? I'll grab that anime treasure faster than Sanji serves dinner! 🍜🏴‍☠️</blockquote>"
 )
 
 FORCE_PIC = os.environ.get("FORCE_PIC", "")
-FORCE_MSG = os.environ.get(
-    "FORCE_SUB_MESSAGE", 
-    "ᴀʀᴀ ᴀʀᴀ!! {mention}\n\n<b><blockquote>ᴀʀᴀ ʏᴏᴜ'ʀᴇ ᴍɪssɪɴɢ ᴏᴜᴛ ᴏɴ sᴏᴍᴇ sᴇʀɪᴏᴜs ᴀᴄᴛɪᴏɴ.ᴛo ᴜɴʟᴏᴄᴋ ᴀʟʟ ғᴇᴀᴛᴜʀᴇs ᴀɴᴅ ᴀᴄᴄᴇss ғɪʟᴇs, ᴊᴏɪɴ ᴀʟʟ of �ᴏᴜʀ ᴄʜᴀɴɴᴇʟs ʙᴇʟᴏᴡ: !</blockquote></b>"
+FORCE_MSG = os.environ.get("FORCE_SUB_MESSAGE", 
+    "ᴀʀᴀ ᴀʀᴀ!! {mention}\n\n<b><blockquote>ᴀʀᴀ ʏᴏᴜ'ʀᴇ ᴍɪssɪɴɢ ᴏᴜᴛ ᴏɴ sᴏᴍᴇ sᴇʀɪᴏᴜs ᴀᴄᴛɪᴏɴ. ᴛo ᴜɴʟᴏᴄᴋ ᴀʟʟ ғᴇᴀᴛᴜʀᴇs ᴀɴᴅ ᴀᴄᴄᴇss ғɪʟᴇs, ᴊᴏɪɴ ᴀʟʟ ᴏғ ᴏᴜʀ ᴄʜᴀɴɴᴇʟs ʙᴇʟᴏᴡ:!</blockquote></b>"
 )
 
 CUSTOM_CAPTION = os.environ.get("CUSTOM_CAPTION", "")
@@ -69,7 +68,7 @@ PROTECT_CONTENT = os.environ.get('PROTECT_CONTENT', "True") == "True"
 DISABLE_CHANNEL_BUTTON = os.environ.get("DISABLE_CHANNEL_BUTTON", "False") == "True"
 
 # ===== Auto Delete Settings ===== #
-AUTO_DELETE_TIME = int(os.getenv("AUTO_DELETE_TIME", 900))  # 15 minutes
+AUTO_DELETE_TIME = int(os.getenv("AUTO_DELETE_TIME", 900))
 AUTO_CLEAN = os.getenv("AUTO_CLEAN", "False").lower() == "true"
 DELETE_DELAY = int(os.getenv("DELETE_DELAY", 10))
 
@@ -116,7 +115,7 @@ logging.basicConfig(
     handlers=[
         RotatingFileHandler(
             LOG_FILE_NAME,
-            maxBytes=50_000_000,  # 50MB
+            maxBytes=50_000_000,
             backupCount=10
         ),
         logging.StreamHandler()
