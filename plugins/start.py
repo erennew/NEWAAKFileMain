@@ -394,7 +394,7 @@ Unsuccessful: <code>{unsuccessful}</code></b>"""
         return await pls_wait.edit(status)
 
     else:
-        msg = await reply_with_clean(REPLY_ERROR)
+        msg = await reply_with_clean(message,REPLY_ERROR)
         await asyncio.sleep(8)
         await msg.delete()
 # 🧹 Auto delete helper
