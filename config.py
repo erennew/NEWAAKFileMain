@@ -43,7 +43,14 @@ MAX_REQUESTS = int(os.getenv("MAX_REQUESTS", 5))  # e.g. 3 requests per TIME_WIN
 GLOBAL_REQUESTS = int(os.getenv("GLOBAL_REQUESTS", 30))  # e.g. 30 requests globally
 GLOBAL_TIME_WINDOW = int(os.getenv("GLOBAL_TIME_WINDOW", 60))  # e.g. in 60 seconds
 USER_REQUESTS = int(os.getenv("USER_REQUESTS", 3))  # default 3 per TIME_WINDOW
-
+# Flood Control
+FLOOD_MAX_REQUESTS = 5  # Requests per...
+FLOOD_TIME_WINDOW = 10  # ...10 seconds
+FLOOD_COOLDOWN = 30     # 30s ban for spammers
+    
+# Boot Settings
+BOOT_DELAY = 0.8  # Seconds between boot messages
+ MIN_BOOT_STEPS = 3  # Minimum steps to show
 #start message
 START_PIC = os.environ.get("START_PIC","")
 START_MSG = os.environ.get(
