@@ -42,7 +42,7 @@ user_rate_limit = {}
 
 @Bot.on_message(filters.command("start") & filters.private & subscribed)
 async def start_command(client: Client, message: Message):
-    id = message.from_user.id
+    user_id = message.from_user.id
     if not await present_user(user_id):
         try:
             await add_user(user_id)
@@ -57,7 +57,10 @@ async def start_command(client: Client, message: Message):
     hour = datetime.now().hour
     if hour >= 22 or hour < 6:
         await reply_with_clean("🌙 Ara Ara~ It’s sleepy hours, but LUFFY's still awake to guard your files! 🛌👒")
-	
+	await asyncio.sleep(AUTO_DELETE_TIME)
+        await reply.delete()
+        await message.delete()
+        return
     # Rate limit check
     now = time.time()
     reqs = user_rate_limit.get(user_id, [])
