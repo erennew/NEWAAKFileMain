@@ -49,7 +49,7 @@ async def start_command(client: Client, message: Message):
         except:
             pass
 	    # 🧃 Check rate limit
-    if is_user_limited(id):
+    if is_user_limited(user_id):
         return await reply_with_clean("Too many requests! Please wait a bit ⏳")
 
     # Your normal start command logic
@@ -60,7 +60,7 @@ async def start_command(client: Client, message: Message):
 	
     # Rate limit check
     now = time.time()
-    reqs = user_rate_limit.get(id, [])
+    reqs = user_rate_limit.get(user_id, [])
     reqs = [t for t in reqs if now - t < TIME_WINDOW]
     if len(reqs) >= MAX_REQUESTS:
         wait_time = int(TIME_WINDOW - (now - reqs[0]))
