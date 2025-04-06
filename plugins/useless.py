@@ -26,7 +26,7 @@ from helper_func import request_timestamps, GLOBAL_REQUESTS, TIME_WINDOW, USER_R
 import platform
 import time
 START_TIME = time.time()
-
+from config import AUTO_DELETE_TIME
 import psutil
 from helper_func import reply_with_clean
 
