@@ -17,13 +17,13 @@ class Database:
         self._client: Optional[pymongo.MongoClient] = None
         self._db: Optional[pymongo.database.Database] = None
         self.user_data: Optional[pymongo.collection.Collection] = None
-        
+
         # Connection settings
         self.connect_timeout = 5000  # 5 seconds
         self.server_selection_timeout = 5000
         self.max_pool_size = 100
         self.min_pool_size = 10
-        
+
         self._initialize()
 
     def _initialize(self):
@@ -36,15 +36,15 @@ class Database:
                 maxPoolSize=self.max_pool_size,
                 minPoolSize=self.min_pool_size
             )
-            
+
             # Test the connection
             self._client.admin.command('ping')
             self._db = self._client[DB_NAME]
             self.user_data = self._db['users']
-            
+
             # Create indexes if they don't exist
             self._create_indexes()
-            
+
         except ConnectionFailure as e:
             logger.error(f"Database connection failed: {e}")
             raise
@@ -58,10 +58,10 @@ class Database:
             self.user_data.create_index(
                 [('_id', pymongo.ASCENDING)],
                 name="user_id_index"
-           )
-            self.log(__name__).info("Database indexes created")
+            )
+            logger.info("Database indexes created")
         except OperationFailure as e:
-            self.log(__name__).warning(f"Index creation skipped: {e}")
+            logger.warning(f"Index creation skipped: {e}")
 
     async def present_user(self, user_id: int) -> bool:
         """Check if user exists in database"""
