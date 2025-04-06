@@ -11,7 +11,7 @@ from pyrogram import filters
 from pyrogram.enums import ChatMemberStatus
 from pyrogram.errors import FloodWait, UserNotParticipant
 from pyrogram.types import Message
-
+from pyrogram.errors.exceptions.bad_request_400 import UserNotParticipant
 from config import (
     FORCE_SUB_CHANNEL_1, FORCE_SUB_CHANNEL_2, 
     FORCE_SUB_CHANNEL_3, FORCE_SUB_CHANNEL_4,
