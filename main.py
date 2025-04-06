@@ -1,4 +1,8 @@
-from bot import Bot
+# Replace:
+Bot().run()
 
+# With:
 if __name__ == "__main__":
-    Bot().run()
+    bot = Bot()
+    bot.start()  # Initialize
+    bot.run()    # Keep running
