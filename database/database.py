@@ -57,11 +57,11 @@ class Database:
         try:
             self.user_data.create_index(
                 [('_id', pymongo.ASCENDING)],
-                unique=True
-            )
-            logger.info("Database indexes created/verified")
+                name="user_id_index"
+           )
+            self.log(__name__).info("Database indexes created")
         except OperationFailure as e:
-            logger.error(f"Index creation failed: {e}")
+            self.log(__name__).warning(f"Index creation skipped: {e}")
 
     async def present_user(self, user_id: int) -> bool:
         """Check if user exists in database"""
