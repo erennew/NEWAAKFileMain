@@ -7,22 +7,22 @@ from logging.handlers import RotatingFileHandler
 load_dotenv()
 
 # ===== Bot Configuration ===== #
-TG_BOT_TOKEN = os.environ.get("TG_BOT_TOKEN", "")
-APP_ID = int(os.environ.get("APP_ID", 0))
-API_HASH = os.environ.get("API_HASH", "")
-OWNER_ID = int(os.environ.get("OWNER_ID", 0))
+TG_BOT_TOKEN = os.environ.get("TG_BOT_TOKEN", "7988129609:AAHIJGSZm2-Ryso22AR4X5s05ZF-HaMmfuc")
+APP_ID = int(os.environ.get("APP_ID", 24500584))
+API_HASH = os.environ.get("API_HASH", "449da69cf4081dc2cc74eea828d0c490")
+OWNER_ID = int(os.environ.get("OWNER_ID", 1047253913))
 
 # ===== Database Configuration ===== #
-CHANNEL_ID = int(os.environ.get("CHANNEL_ID", 0))
-DB_URI = os.environ.get("DATABASE_URL", "")
+CHANNEL_ID = int(os.environ.get("CHANNEL_ID", -1002448203068))
+DB_URI = os.environ.get("DATABASE_URL", "mongodb+srv://chattaravikiran2001:6nJQC6pb3wLf1zCu@cluster1.daxfzgr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster1")
 DB_NAME = os.environ.get("DATABASE_NAME", "Cluster1")
 
 # ===== Force Subscription Settings ===== #
 JOIN_REQUEST_ENABLE = bool(os.environ.get("JOIN_REQUEST_ENABLED", False))
-FORCE_SUB_CHANNEL_1 = int(os.environ.get("FORCE_SUB_CHANNEL_1", 0)) if os.environ.get("FORCE_SUB_CHANNEL_1") else None
-FORCE_SUB_CHANNEL_2 = int(os.environ.get("FORCE_SUB_CHANNEL_2", 0)) if os.environ.get("FORCE_SUB_CHANNEL_2") else None
-FORCE_SUB_CHANNEL_3 = int(os.environ.get("FORCE_SUB_CHANNEL_3", 0)) if os.environ.get("FORCE_SUB_CHANNEL_3") else None
-FORCE_SUB_CHANNEL_4 = int(os.environ.get("FORCE_SUB_CHANNEL_4", 0)) if os.environ.get("FORCE_SUB_CHANNEL_4") else None
+FORCE_SUB_CHANNEL_1 = int(os.environ.get("FORCE_SUB_CHANNEL_1", 0)) if os.environ.get("-1002650862527") else None
+FORCE_SUB_CHANNEL_2 = int(os.environ.get("FORCE_SUB_CHANNEL_2", 0)) if os.environ.get("-1002331321194") else None
+FORCE_SUB_CHANNEL_3 = int(os.environ.get("FORCE_SUB_CHANNEL_3", 0)) if os.environ.get("-1001956677010") else None
+FORCE_SUB_CHANNEL_4 = int(os.environ.get("FORCE_SUB_CHANNEL_4", 0)) if os.environ.get("-1002244170363") else None
 
 # ===== Bot Performance Settings ===== #
 TG_BOT_WORKERS = int(os.environ.get("TG_BOT_WORKERS", 4))
