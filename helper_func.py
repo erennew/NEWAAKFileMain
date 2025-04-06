@@ -128,3 +128,39 @@ async def delete_file(messages, client, process):
 
 
 subscribed = filters.create(is_subscribed)
+
+
+# 🧃 Rate Limit Support (Global + Per User)
+import time
+from collections import deque
+from config import GLOBAL_REQUESTS, USER_REQUESTS, TIME_WINDOW
+
+# Global list of request timestamps
+request_timestamps = deque()
+
+# Dictionary to track per-user request timestamps
+user_request_timestamps = {}
+def is_user_limited(user_id):
+    now = time.time()
+
+    # 🌍 GLOBAL RATE LIMIT
+    while request_timestamps and now - request_timestamps[0] > TIME_WINDOW:
+        request_timestamps.popleft()
+    if len(request_timestamps) >= GLOBAL_REQUESTS:
+        return True
+
+    # 👤 USER RATE LIMIT
+    if user_id not in user_request_timestamps:
+        user_request_timestamps[user_id] = deque()
+    user_queue = user_request_timestamps[user_id]
+
+    while user_queue and now - user_queue[0] > TIME_WINDOW:
+        user_queue.popleft()
+
+    if len(user_queue) >= USER_REQUESTS:
+        return True
+
+    # No limit reached — add timestamps
+    request_timestamps.append(now)
+    user_queue.append(now)
+    return False
