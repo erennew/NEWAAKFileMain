@@ -129,7 +129,31 @@ async def delete_file(messages, client, process):
 
 subscribed = filters.create(is_subscribed)
 
-
+# Add this new function:
+async def check_flood(user_id: int) -> bool:
+    """
+    Returns True if user is flooding
+    """
+    now = time.time()
+    user_data = user_rate_limit.setdefault(user_id, {
+        "timestamps": [],
+        "warned": False
+    })
+    
+    # Clean old requests
+    user_data["timestamps"] = [
+        t for t in user_data["timestamps"] 
+        if now - t < Config.FLOOD_TIME_WINDOW
+    ]
+    
+    if len(user_data["timestamps"]) >= Config.FLOOD_MAX_REQUESTS:
+        if not user_data["warned"]:
+            user_data["warned"] = True
+            return False  # Allow one warning
+        return True
+    
+    user_data["timestamps"].append(now)
+    return False
 # 🧃 Rate Limit Support (Global + Per User)
 import time
 from collections import deque
