@@ -70,6 +70,10 @@ DISABLE_CHANNEL_BUTTON = os.environ.get("DISABLE_CHANNEL_BUTTON", None) == 'True
 
 BOT_STATS_TEXT = "<b><blockquote>BOT UPTIME</b>\n{uptime}</blockquote>"
 USER_REPLY_TEXT = "<blockquote>ᴀʀᴀ!! ᴀʀᴀ!! ɪᴀᴍ ᴏɴʟʏ ᴡᴏʀᴋ ғᴏʀ ᴍʏ ʟᴏᴠᴇʟʏ ᴋᴀᴡᴀɪɪ 🥰 @JeffreySama !</blockquote>"
+WAIT_MSG = os.environ.get(
+    "WAIT_MSG",
+    "🧮 Luffy's counting the pirate crew... Hold tight, nakama! ⏳"
+)
 
 ADMINS.append(OWNER_ID)
 ADMINS.append(6266529037)
