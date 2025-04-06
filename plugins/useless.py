@@ -24,7 +24,9 @@ from database.database import full_userbase
 
 from helper_func import request_timestamps, GLOBAL_REQUESTS, TIME_WINDOW, USER_REQUESTS, reply_with_clean
 import platform
-from main import START_TIME
+import time
+START_TIME = time.time()
+
 import psutil
 from helper_func import reply_with_clean
 
