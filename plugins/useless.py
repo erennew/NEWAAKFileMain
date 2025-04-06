@@ -18,10 +18,10 @@
 #        await message.reply(USER_REPLY_TEXT)
 from pyrogram import filters
 from pyrogram.types import Message
-from NEWAAKFileMain import Bot, START_TIME
-from NEWAAKFileMain.config import ADMINS, USER_REPLY_TEXT
-from NEWAAKFileMain.database.users import full_userbase
-from NEWAAKFileMain.helper_func.ratelimit import request_timestamps, GLOBAL_REQUESTS, TIME_WINDOW, USER_REQUESTS
+from bot import Bot, START_TIME
+from config import ADMINS, USER_REPLY_TEXT
+from database.users import full_userbase
+from helper_func import request_timestamps, GLOBAL_REQUESTS, TIME_WINDOW, USER_REQUESTS, reply_with_clean
 import platform
 import time
 import psutil
