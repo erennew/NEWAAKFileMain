@@ -6,256 +6,275 @@ import contextlib
 from datetime import datetime
 from pyrogram import Client, filters
 from pyrogram.enums import ParseMode
-from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, ChatPermissions
 from pyrogram.errors import FloodWait, UserIsBlocked, InputUserDeactivated
 from bot import Bot
-PICS = (os.environ.get("PICS", "https://i.ibb.co/Kx5mS6V5/x.jpg https://i.ibb.co/jZQHRzKv/x.jpg https://i.ibb.co/PvB2DVHQ/x.jpg https://i.ibb.co/cSYRkdz6/x.jpg https://i.ibb.co/FjwYKW9/x.jpg")).split()
-from config import GLOBAL_REQUESTS, GLOBAL_TIME_WINDOW, MAX_REQUESTS, TIME_WINDOW
-from config import ADMINS, FORCE_MSG, START_MSG, CUSTOM_CAPTION, DISABLE_CHANNEL_BUTTON, PROTECT_CONTENT, START_PIC, FORCE_PIC, AUTO_DELETE_TIME, AUTO_DELETE_MSG, JOIN_REQUEST_ENABLE, FORCE_SUB_CHANNEL_1, FORCE_SUB_CHANNEL_2, FORCE_SUB_CHANNEL_3, FORCE_SUB_CHANNEL_4
-from helper_func import subscribed, decode, get_messages, delete_file
-from database.database import add_user, del_user, full_userbase, total_users,present_user
+from config import (
+    GLOBAL_REQUESTS, GLOBAL_TIME_WINDOW, MAX_REQUESTS, TIME_WINDOW,
+    ADMINS, FORCE_MSG, START_MSG, CUSTOM_CAPTION, DISABLE_CHANNEL_BUTTON,
+    PROTECT_CONTENT, START_PIC, FORCE_PIC, AUTO_DELETE_TIME, AUTO_DELETE_MSG,
+    JOIN_REQUEST_ENABLE, FORCE_SUB_CHANNEL_1, FORCE_SUB_CHANNEL_2,
+    FORCE_SUB_CHANNEL_3, FORCE_SUB_CHANNEL_4
+)
+from helper_func import subscribed, decode, get_messages, delete_file, is_user_limited
+from database.database import add_user, del_user, full_userbase, total_users, present_user
 
+# ===== CONSTANTS ===== #
+PICS = os.environ.get("PICS", "").split() or [
+    "https://i.ibb.co/Kx5mS6V5/x.jpg",
+    "https://i.ibb.co/jZQHRzKv/x.jpg",
+    "https://i.ibb.co/PvB2DVHQ/x.jpg",
+    "https://i.ibb.co/cSYRkdz6/x.jpg",
+    "https://i.ibb.co/FjwYKW9/x.jpg"
+]
 
-from helper_func import is_user_limited
-#from config import START_TEXT
-async def create_invite_links(client: Client):
-    invite1 = await client.create_chat_invite_link(
-        chat_id=FORCE_SUB_CHANNEL_1,
-        creates_join_request=True
-    )
-    invite2 = await client.create_chat_invite_link(
-        chat_id=FORCE_SUB_CHANNEL_2,
-        creates_join_request=True
-    )
-    invite3 = await client.create_chat_invite_link(
-        chat_id=FORCE_SUB_CHANNEL_3,
-        creates_join_request=True
-    )
-    invite4 = await client.create_chat_invite_link(
-        chat_id=FORCE_SUB_CHANNEL_4,
-        creates_join_request=True
-    )
-    return invite1, invite2, invite3, invite4
-
-
+# ===== FLOOD CONTROL ===== #
 user_rate_limit = {}
+FLOOD_COOLDOWN = 30  # 30 second timeout for spammers
 
+async def check_flood(user_id: int) -> tuple:
+    """Check if user is flooding the bot"""
+    now = time.time()
+    user_data = user_rate_limit.setdefault(user_id, {
+        "timestamps": [],
+        "warn_level": 0
+    })
+    
+    # Clean old requests (10s window)
+    user_data["timestamps"] = [t for t in user_data["timestamps"] if now - t < 10]
+    
+    if len(user_data["timestamps"]) >= 10:  # 10 requests/10s = timeout
+        user_data["warn_level"] = 2
+        return True, 2
+    elif len(user_data["timestamps"]) >= 5:  # 5 requests/10s = warning
+        user_data["warn_level"] = 1
+        return True, 1
+    
+    user_data["timestamps"].append(now)
+    return False, 0
+
+# ===== BOOT SEQUENCES ===== #
+boot_sequences = [
+    # Gear 2 Turbo (3 lines)
+    [
+        "⚡ <b>Gear Second: Activated!</b>",
+        "💨 <i>Blood pumping... Systems accelerating!</i>",
+        "✅ <b>READY TO SERVE AT JET SPEED!</b> 🏴‍☠️"
+    ],
+    # Thousand Sunny (4 lines)
+    [
+        "⚓ <b>THOUSAND SUNNY DEPLOYED</b>",
+        "🌊 <i>Sailing through the Grand Line...</i>",
+        "🧭 <i>Navigation systems: ONLINE</i>",
+        "✅ <b>ALL HANDS ON DECK!</b> ⛵"
+    ],
+    # Nika Awakening (5 lines)
+    [
+        "🌀 <b>DRUMS OF LIBERATION DETECTED!</b>",
+        "🌟 <i>The Warrior of Liberation awakens...</i>",
+        "🥁 <i>Boom-ba-boom-ba-boom...</i>",
+        "✨ <i>Reality bending to your will!</i>",
+        "✅ <b>GEAR 5: FULLY OPERATIONAL!</b> 🌈"
+    ],
+    # Franky SUPER (6 lines)
+    [
+        "🔧 <b>FRANKY'S SUPER STARTUP!</b>",
+        "⚙️ <i>Cola energy at 9000%!</i>",
+        "🤖 <i>Radar systems scanning...</i>",
+        "🦾 <i>Robotic arms calibrating...</i>",
+        "🚀 <i>Rockets primed for launch!</i>",
+        "✅ <b>SUUUUUPER SYSTEMS READY!</b> 💥"
+    ],
+    # Whole Cake (7 lines)
+    [
+        "🍰 <b>WHOLE CAKE BOOT SEQUENCE!</b>",
+        "🧁 <i>Preparing file buffet...</i>",
+        "🍫 <i>Chocolate servers melting in...</i>",
+        "🍮 <i>Sweet storage systems loaded</i>",
+        "☕ <i>Tea bots standing by...</i>",
+        "👑 <i>Big Mom approves this startup</i>",
+        "✅ <b>YOUR FILES WILL BE DELICIOUS!</b> 🍩"
+    ]
+]
+
+# ===== FLOOD WARNINGS ===== #
+FLOOD_SEQUENCES = [
+    # Friendly (3 lines)
+    [
+        "🌊 <b>Woah there nakama!</b>",
+        "<i>You're moving faster than Gear 2 Luffy!</i>",
+        "⏳ Please wait 3 seconds between requests!"
+    ],
+    # Conqueror's (4 lines)
+    [
+        "👑 <b>CONQUEROR'S HAKI DETECTED!</b>",
+        "⚡ <i>Your spam shakes the server!</i>",
+        "💢 Even Rayleigh would tell you to chill!",
+        "🛑 5s cooldown activated..."
+    ],
+    # Admiral (5 lines)
+    [
+        "☠️ <b>MARINE ADMIRAL INTERVENTION!</b>",
+        "👮 <i>Akainu detected spam activity!</i>",
+        "🔥 <i>Aokiji froze your requests!</i>",
+        "⚡ <i>Kizaru says 'Too fast, yooo~'</i>",
+        "⏲️ <b>10s TIMEOUT ENFORCED!</b> 🚫"
+    ]
+]
+
+# ===== HELPER FUNCTIONS ===== #
+async def create_invite_links(client: Client):
+    """Create invite links for force sub channels"""
+    links = []
+    for channel in [FORCE_SUB_CHANNEL_1, FORCE_SUB_CHANNEL_2, 
+                   FORCE_SUB_CHANNEL_3, FORCE_SUB_CHANNEL_4]:
+        if channel:
+            try:
+                links.append(await client.create_chat_invite_link(
+                    chat_id=channel,
+                    creates_join_request=True
+                ))
+            except Exception as e:
+                print(f"Error creating invite for {channel}: {e}")
+    return links
+
+async def auto_delete(msg, user_msg=None):
+    """Auto delete messages after delay"""
+    from config import AUTO_CLEAN, DELETE_DELAY
+    if AUTO_CLEAN:
+        await asyncio.sleep(DELETE_DELAY)
+        with contextlib.suppress(Exception):
+            await msg.delete()
+            if user_msg:
+                await user_msg.delete()
+
+async def reply_with_clean(message, text, **kwargs):
+    """Reply with auto-delete"""
+    reply = await message.reply(text, **kwargs)
+    asyncio.create_task(auto_delete(reply, message))
+    return reply
+
+# ===== COMMAND HANDLERS ===== #
 @Bot.on_message(filters.command("start") & filters.private & subscribed)
 async def start_command(client: Client, message: Message):
     user_id = message.from_user.id
 
-    # Add user if not present
+    # Flood control check
+    is_flooding, level = await check_flood(user_id)
+    if is_flooding:
+        warning = random.choice(FLOOD_SEQUENCES[min(level, len(FLOOD_SEQUENCES)-1)])
+        if level == 2:  # Timeout
+            until = int(time.time()) + FLOOD_COOLDOWN
+            await client.restrict_chat_member(
+                chat_id=message.chat.id,
+                user_id=user_id,
+                until_date=until,
+                permissions=ChatPermissions(can_send_messages=False)
+            )
+        return await reply_with_clean(message, "\n".join(warning))
+
+    # Add user to database
     if not await present_user(user_id):
         try:
             await add_user(user_id)
-        except:
-            pass
+        except Exception as e:
+            print(f"Error adding user {user_id}: {e}")
 
-    # Rate limit check
-    if is_user_limited(user_id):
-        return await reply_with_clean(message, "Too many requests! Please wait a bit ⏳")
-
-    now = time.time()
-    reqs = user_rate_limit.get(user_id, [])
-    reqs = [t for t in reqs if now - t < TIME_WINDOW]
-
-    if len(reqs) >= MAX_REQUESTS:
-        wait_time = int(TIME_WINDOW - (now - reqs[0]))
-        return await reply_with_clean(message, f"⚠️ Slow down, nakama! You're too fast for LUFFY! 💤\nTry again in <b>{wait_time}</b> seconds.")
-
-    reqs.append(now)
-    user_rate_limit[user_id] = reqs
-
-    # 🌙 Night Mode Greeting
+    # Night mode greeting
     hour = datetime.now().hour
     if hour >= 22 or hour < 6:
-        reply = await message.reply("🌙 Ara Ara~ It’s sleepy hours, but LUFFY's still awake to guard your files! 🛌👒")
+        reply = await message.reply("🌙 Ara Ara~ It's sleepy hours, but LUFFY's still awake! 🛌👒")
         await asyncio.sleep(AUTO_DELETE_TIME)
         await reply.delete()
         await message.delete()
         return
 
-    # 🌞 Normal Greeting
- #   return await reply_with_clean(message, START_MSG.format(message.from_user.first_name))
-
-
-    # Boot animation setup
-  #  progress = await message.reply("👒 Booting LUFFY File Core...")
-
-    # Replace your existing boot_sequences with this:
-boot_sequences = [
-    # Gear 2 Sequence (Fast Startup)
-    [
-        "⚡ <b>Gear 2: Jet Pistol Loading!</b>",
-        "💨 <i>Blood pumping... Systems accelerating!</i>",
-        "✅ <b>LUFFY-BOT READY TO SERVE!</b> 🏴‍☠️"
-    ],
-    
-    # Gear 5 Sequence (Premium Experience)
-    [
-        "🌀 <b>NIKA AWAKENING DETECTED!</b>",
-        "🥁 <i>Drums of Liberation beating...</i>",
-        "✨ <b>FULL POWER ACTIVATED!</b>",
-        "✅ <b>YOUR FILES WILL BE LEGENDARY!</b> 🌟"
-    ],
-    
-    # Sunny Go Sequence (File Transfer Focus)
-    [
-        "⚓ <b>THOUSAND SUNNY DEPLOYED</b>",
-        "🧭 <i>Navigating to your files...</i>",
-        "📦 <b>CARGO HOLD OPENED</b>",
-        "✅ <b>READY FOR DOWNLOADS!</b> 📥"
-    ],
-    
-    # Emergency Startup
-    [
-        "🚨 <b>EMERGENCY BOOT SEQUENCE</b>",
-        "🔧 <i>Franky doing last-minute fixes...</i>",
-        "💥 <b>COLA POWER OVERRIDE!</b>",
-        "✅ <b>SYSTEMS ONLINE (KINDA)</b> 🤖"
-    ]
-]
-
-# Add this after boot_sequences:
-FLOOD_SEQUENCES = [
-    # Level 1: Friendly warning
-    [
-        "🌊 <b>Woah there nakama!</b>",
-        "<i>You're moving faster than Gear 2!</i>",
-        "⏳ Please wait 3 seconds between requests!"
-    ],
-    
-    # Level 2: Stronger warning
-    [
-        "⚡ <b>Conqueror's Haki Detected!</b>",
-        "<i>You're spamming like Blackbeard!</i>",
-        "🛑 5s cooldown activated..."
-    ],
-    
-    # Level 3: Timeout
-    [
-        "👹 <b>ADMIRAL ALERT!</b>",
-        "<i>Borsalino would be impressed by this spam...</i>",
-        "⏲️ 10s timeout enforced!",
-        "💢 <b>Zoro's getting lost from all this!</b>"
-    ]
-]
-
-
-
-    steps = random.choice(boot_sequences)
-
-    # Send the initial boot message
+    # Boot animation
     try:
         progress = await message.reply("👒 Booting LUFFY File Core...")
-    except Exception as e:
-        print(f"Error sending boot message: {e}")
-        return  # Stop execution if message fails
-
-    # Loop through each step safely
-    for step in steps:
-        await asyncio.sleep(random.uniform(0.5, 1.2))
-        with contextlib.suppress(Exception):
-            await progress.edit(step)
-
-    # Try to delete the boot message safely
-    await asyncio.sleep(0.5)
-    with contextlib.suppress(Exception):
+        steps = random.choice(boot_sequences)
+        for step in steps:
+            await asyncio.sleep(random.uniform(0.5, 1.2))
+            with contextlib.suppress(Exception):
+                await progress.edit(step)
+        await asyncio.sleep(0.5)
         await progress.delete()
+    except Exception as e:
+        print(f"Boot animation error: {e}")
 
-    # Handle any arguments from /start
+    # Handle file requests
     text = message.text
     if len(text) > 7:
         try:
             base64_string = text.split(" ", 1)[1]
-        except:
-            return
-        string = await decode(base64_string)
-        argument = string.split("-")
+            string = await decode(base64_string)
+            argument = string.split("-")
 
-        if len(argument) == 3:
-            try:
+            if len(argument) == 3:
                 start = int(int(argument[1]) / abs(client.db_channel.id))
                 end = int(int(argument[2]) / abs(client.db_channel.id))
-            except:
-                return
-            if start <= end:
-                ids = range(start, end + 1)
-            else:
-                ids = []
-                i = start
-                while True:
-                    ids.append(i)
-                    i -= 1
-                    if i < end:
-                        break
-        elif len(argument) == 2:
-            try:
+                ids = range(start, end + 1) if start <= end else list(range(start, end - 1, -1))
+            elif len(argument) == 2:
                 ids = [int(int(argument[1]) / abs(client.db_channel.id))]
-            except:
+            else:
                 return
-        else:
+
+            temp_msg = await message.reply("<blockquote>⚡ Ara~ Getting your file ready... Hold tight!</blockquote>")
+            messages = await get_messages(client, ids)
+            await temp_msg.delete()
+
+            track_msgs = []
+            for msg in messages:
+                caption = CUSTOM_CAPTION.format(
+                    previouscaption="" if not msg.caption else msg.caption.html,
+                    filename=msg.document.file_name
+                ) if bool(CUSTOM_CAPTION) and msg.document else (msg.caption.html if msg.caption else "")
+
+                reply_markup = None if not DISABLE_CHANNEL_BUTTON else msg.reply_markup
+
+                try:
+                    copied_msg = await msg.copy(
+                        chat_id=message.from_user.id,
+                        caption=caption,
+                        parse_mode=ParseMode.HTML,
+                        reply_markup=reply_markup,
+                        protect_content=PROTECT_CONTENT
+                    )
+                    if AUTO_DELETE_TIME and AUTO_DELETE_TIME > 0:
+                        track_msgs.append(copied_msg)
+                    await asyncio.sleep(0.5)
+                except FloodWait as e:
+                    await asyncio.sleep(e.value)
+                    copied_msg = await msg.copy(
+                        chat_id=message.from_user.id,
+                        caption=caption,
+                        parse_mode=ParseMode.HTML,
+                        reply_markup=reply_markup,
+                        protect_content=PROTECT_CONTENT
+                    )
+                    if AUTO_DELETE_TIME and AUTO_DELETE_TIME > 0:
+                        track_msgs.append(copied_msg)
+
+            if track_msgs:
+                delete_data = await client.send_message(
+                    chat_id=message.from_user.id,
+                    text=AUTO_DELETE_MSG.format(time=AUTO_DELETE_TIME // 60)
+                )
+                asyncio.create_task(delete_file(track_msgs, client, delete_data))
             return
 
-        # Let user know it's processing
-        temp_msg = await message.reply("<blockquote>⚡ Ara~ Getting your file ready... Hold tight!</blockquote>")
-
-        try:
-            messages = await get_messages(client, ids)
-        except:
+        except Exception as e:
+            print(f"File handling error: {e}")
             await message.reply_text("<blockquote>😵‍💫 Something went wrong while fetching your files!</blockquote>")
             return
 
-        await temp_msg.delete()
-        track_msgs = []
-
-
-        for msg in messages:
-            caption = CUSTOM_CAPTION.format(previouscaption="" if not msg.caption else msg.caption.html,
-                                            filename=msg.document.file_name) if bool(CUSTOM_CAPTION) and msg.document else (msg.caption.html if msg.caption else "")
-
-            reply_markup = None if not DISABLE_CHANNEL_BUTTON else msg.reply_markup
-
-            try:
-                copied_msg = await msg.copy(
-                    chat_id=message.from_user.id,
-                    caption=caption,
-                    parse_mode=ParseMode.HTML,
-                    reply_markup=reply_markup,
-                    protect_content=PROTECT_CONTENT
-                )
-                if AUTO_DELETE_TIME and AUTO_DELETE_TIME > 0:
-                    track_msgs.append(copied_msg)
-                await asyncio.sleep(0.5)
-            except FloodWait as e:
-                await asyncio.sleep(e.value)
-                copied_msg = await msg.copy(
-                    chat_id=message.from_user.id,
-                    caption=caption,
-                    parse_mode=ParseMode.HTML,
-                    reply_markup=reply_markup,
-                    protect_content=PROTECT_CONTENT
-                )
-                if AUTO_DELETE_TIME and AUTO_DELETE_TIME > 0:
-                    track_msgs.append(copied_msg)
-
-        if track_msgs:
-            delete_data = await client.send_message(
-                chat_id=message.from_user.id,
-                text=AUTO_DELETE_MSG.format(time=AUTO_DELETE_TIME // 60)
-            )
-            asyncio.create_task(delete_file(track_msgs, client, delete_data))
-        return
-
-    # No encoded file - show greeting UI
-    reply_markup = InlineKeyboardMarkup(
+    # Show main menu
+    reply_markup = InlineKeyboardMarkup([
         [
-            [
-                InlineKeyboardButton("📜 Pirate Log", callback_data="about"),
-                InlineKeyboardButton("🗺️ Close Map", callback_data="close")
-            ]
+            InlineKeyboardButton("📜 Pirate Log", callback_data="about"),
+            InlineKeyboardButton("🗺️ Close Map", callback_data="close")
         ]
-    )
+    ])
 
     if START_PIC:
         try:
@@ -273,7 +292,7 @@ FLOOD_SEQUENCES = [
             )
             await auto_delete(reply, message)
         except Exception as e:
-            print(f"Error replying with photo: {e}")
+            print(f"Error sending photo: {e}")
             await message.reply_text("Sorry, there was an issue with the photo.")
     else:
         await message.reply_text(
@@ -289,72 +308,42 @@ FLOOD_SEQUENCES = [
             quote=True
         )
 
-
-
-# =====================================================================================##
-
-#WAIT_MSG = """<b><blockquote>I will buy you a lollypop Be patient ...</blockquote></b>"""
-#import random
-
-WAIT_MESSAGES = [
-    "☠️ Yo! Luffy here! Hold on tight and <b>wait a sec</b>, the adventure’s loading... 🍖",
-    "🌀 GEAR 2... ACTIVATING! Give me a moment, nakama! Just <b>wait a little</b>! 💨",
-    "🍖 <b>Wait up!</b> Meat first, files later! I'm grabbing it for ya!",
-    "⚓ Just <b>wait for it</b>—we're hoisting the sail! Captain Luffy’s on it! ☀️",
-    "🔥 Gear 5 Vibes Loading... <b>Wait right there</b>, this’ll be legendary! 💥",
-    "💬 Zoro got lost again... So while he’s wandering, <b>you wait</b>, I’m fetching your stuff! 🗺️",
-    "🎩 Hold onto your hat! I’m stretching to grab your request! Just <b>wait a sec</b>! 🏴‍☠️",
-    "⏳ <b>Wait patiently!</b> This will be faster than Sanji kickin’ someone for disrespectin' Nami! 💨"
-]
-
-def get_wait_msg():
-    return f"<blockquote>{random.choice(WAIT_MESSAGES)}</blockquote>"
-
-REPLY_ERROR = """<code>Use this command as a replay to any telegram message with out any spaces.</code>"""
-
-# =====================================================================================##
-
 @Bot.on_message(filters.command('start') & filters.private)
 async def not_joined(client: Client, message: Message):
-    # Create invite links before using them
-    invite1, invite2, invite3, invite4 = await create_invite_links(client)
-
+    invite_links = await create_invite_links(client)
     buttons = [
         [
-            InlineKeyboardButton(text="• ᴊᴏɪɴ ᴄʜᴀɴɴᴇʟ", url=invite1.invite_link),
-            InlineKeyboardButton(text="ᴊᴏɪɴ ᴄʜᴀɴɴᴇʟ •", url=invite2.invite_link),
+            InlineKeyboardButton(text="• ᴊᴏɪɴ ᴄʜᴀɴɴᴇʟ", url=invite_links[0].invite_link),
+            InlineKeyboardButton(text="ᴊᴏɪɴ ᴄʜᴀɴɴᴇʟ •", url=invite_links[1].invite_link),
         ],
         [
-            InlineKeyboardButton(text="• ᴊᴏɪɴ ᴄʜᴀɴɴᴇʟ", url=invite3.invite_link),
-            InlineKeyboardButton(text="ᴊᴏɪɴ ᴄʜᴀɴɴᴇʟ •", url=invite4.invite_link),
+            InlineKeyboardButton(text="• ᴊᴏɪɴ ᴄʜᴀɴɴᴇʟ", url=invite_links[2].invite_link),
+            InlineKeyboardButton(text="ᴊᴏɪɴ ᴄʜᴀɴɴᴇʟ •", url=invite_links[3].invite_link),
         ]
     ]
+    
     try:
-        buttons.append(
-            [
-                InlineKeyboardButton(
-                    text='• ɴᴏᴡ ᴄʟɪᴄᴋ ʜᴇʀᴇ •',
-                    url=f"https://t.me/{client.username}?start={message.command[1]}"
-                )
-            ]
-        )
+        buttons.append([
+            InlineKeyboardButton(
+                text='• ɴᴏᴡ ᴄʟɪᴄᴋ ʜᴇʀᴇ •',
+                url=f"https://t.me/{client.username}?start={message.command[1]}"
+            )
+        ])
     except IndexError:
         pass
 
-
-    if FORCE_PIC:  # Check if FORCE_PIC has a value
+    if FORCE_PIC:
         await message.reply_photo(
-            photo = random.choice(PICS),
-            caption = START_MSG.format(
-                first = message.from_user.first_name,
-                last = message.from_user.last_name,
-                username = None if not message.from_user.username else '@' + message.from_user.username,
-                mention = message.from_user.mention,
-                id = message.from_user.id
+            photo=random.choice(PICS),
+            caption=START_MSG.format(
+                first=message.from_user.first_name,
+                last=message.from_user.last_name,
+                username=None if not message.from_user.username else '@' + message.from_user.username,
+                mention=message.from_user.mention,
+                id=message.from_user.id
             ),
-            reply_markup =InlineKeyboardMarkup(buttons),
-	      #  message_effect_id=5104841245755180586, #🔥
-	    	quote=True
+            reply_markup=InlineKeyboardMarkup(buttons),
+            quote=True
         )
     else:
         await message.reply(
@@ -370,73 +359,60 @@ async def not_joined(client: Client, message: Message):
             disable_web_page_preview=True
         )
 
-
 @Bot.on_message(filters.command('users') & filters.private & filters.user(ADMINS))
 async def get_users(client: Bot, message: Message):
-    msg = await client.send_message(chat_id=message.chat.id, text=get_wait_msg())
+    msg = await client.send_message(chat_id=message.chat.id, text="<i>Counting crew members...</i>")
     users = await full_userbase()
-    await msg.edit(f"{len(users)} users are using this bot")
+    await msg.edit(f"<b>Total Nakamas:</b> {len(users)}")
 
 @Bot.on_message(filters.private & filters.command('broadcast') & filters.user(ADMINS))
 async def send_text(client: Bot, message: Message):
     if message.reply_to_message:
         query = await full_userbase()
         broadcast_msg = message.reply_to_message
-        total = 0
-        successful = 0
-        blocked = 0
-        deleted = 0
-        unsuccessful = 0
+        stats = {'total': 0, 'success': 0, 'blocked': 0, 'deleted': 0, 'failed': 0}
 
-        pls_wait = await reply_with_clean("<i><blockquote>Broadcasting Message.. This will Take Some Time</blockquote></i>")
+        pls_wait = await message.reply("<i>Broadcasting to all nakamas...</i>")
         for chat_id in query:
             try:
                 await broadcast_msg.copy(chat_id)
-                successful += 1
+                stats['success'] += 1
             except FloodWait as e:
                 await asyncio.sleep(e.x)
                 await broadcast_msg.copy(chat_id)
-                successful += 1
+                stats['success'] += 1
             except UserIsBlocked:
                 await del_user(chat_id)
-                blocked += 1
+                stats['blocked'] += 1
             except InputUserDeactivated:
                 await del_user(chat_id)
-                deleted += 1
+                stats['deleted'] += 1
             except:
-                unsuccessful += 1
-                pass
-            total += 1
+                stats['failed'] += 1
+            stats['total'] += 1
 
-        status = f"""<b><u><blockquote>Broadcast Completed</blockquote></u>
-
-Total Users: <code>{total}</code>
-Successful: <code>{successful}</code>
-Blocked Users: <code>{blocked}</code>
-Deleted Accounts: <code>{deleted}</code>
-Unsuccessful: <code>{unsuccessful}</code></b>"""
-
-        return await pls_wait.edit(status)
-
+        status = f"""<b>Broadcast Complete</b>
+Total: {stats['total']}
+Success: {stats['success']}
+Blocked: {stats['blocked']}
+Deleted: {stats['deleted']}
+Failed: {stats['failed']}"""
+        await pls_wait.edit(status)
     else:
-        msg = await reply_with_clean(message,REPLY_ERROR)
+        msg = await message.reply("Reply to a message to broadcast")
         await asyncio.sleep(8)
         await msg.delete()
-# 🧹 Auto delete helper
-async def auto_delete(msg, user_msg=None):
-    from config import AUTO_CLEAN, DELETE_DELAY
-    import asyncio
-    if AUTO_CLEAN:
-        await asyncio.sleep(DELETE_DELAY)
-        try:
-            await msg.delete()
-            if user_msg:
-                await user_msg.delete()
-        except:
-            pass
 
-# Global reply function with auto-clean
-async def reply_with_clean(message, text, **kwargs):
-    reply = await message.reply(text, **kwargs)
-    await auto_delete(reply, message)
-    return reply
+# ===== UTILITY FUNCTIONS ===== #
+WAIT_MESSAGES = [
+    "☠️ Yo! Luffy here! Hold on tight...",
+    "🌀 GEAR 2... ACTIVATING!",
+    "🍖 Meat first, files later!",
+    "⚓ Hoisting the sail!",
+    "🔥 Gear 5 Vibes Loading..."
+]
+
+def get_wait_msg():
+    return f"<blockquote>{random.choice(WAIT_MESSAGES)}</blockquote>"
+
+REPLY_ERROR = "<code>Reply to a message to use this command</code>"
