@@ -48,10 +48,10 @@ async def start_command(client: Client, message: Message):
             pass
 	    # 🧃 Check rate limit
     if is_user_limited(id):
-        return await message.reply("Too many requests! Please wait a bit ⏳")
+        return await reply_with_clean("Too many requests! Please wait a bit ⏳")
 
     # Your normal start command logic
-    await message.reply_text(START_TEXT.format(message.from_user.first_name))
+    return await reply_with_clean(START_TEXT.format(message.from_user.first_name))
     hour = datetime.now().hour
     if hour >= 22 or hour < 6:
         await reply_with_clean("🌙 Ara Ara~ It’s sleepy hours, but LUFFY's still awake to guard your files! 🛌👒")
