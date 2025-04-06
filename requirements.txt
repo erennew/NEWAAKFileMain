@@ -1,6 +1,6 @@
 https://codeload.github.com/KurimuzonAkuma/pyrogram/zip/refs/heads/dev
 # --- For-Bot-Working --------- #
-pyrogram
+pyrogram>=2.0.0,<3.0.0
 TgCrypto
 pyromod==1.5
 python-dotenv
