@@ -129,11 +129,11 @@ class Bot(Client):
             self.log(__name__).error(f"❌ Web server failed: {e}")
             raise
 
-    async def start(self):
+    async def start(self, use_qr=False, except_ids=None):  # Add these parameters
         """Start the bot with full initialization"""
         self.log(__name__).info("🚀 Initializing Luffy File Bot...")
-        await super().start()
-        
+        await super().start()  # Don't pass the parameters here
+    
         try:
             # Get bot info
             bot_me = await self.get_me()
