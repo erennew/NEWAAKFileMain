@@ -1,5 +1,4 @@
-#(©) WeekendsBotz
-
+# (©) WeekendsBotz
 import os
 import logging
 from dotenv import load_dotenv
@@ -7,119 +6,107 @@ from logging.handlers import RotatingFileHandler
 
 load_dotenv()
 
-#Bot token @Botfather
-TG_BOT_TOKEN = os.environ.get("TG_BOT_TOKEN", "7988129609:AAHIJGSZm2-Ryso22AR4X5s05ZF-HaMmfuc")
+# ===== Bot Configuration ===== #
+TG_BOT_TOKEN = os.environ.get("TG_BOT_TOKEN", "")
+APP_ID = int(os.environ.get("APP_ID", 0))
+API_HASH = os.environ.get("API_HASH", "")
+OWNER_ID = int(os.environ.get("OWNER_ID", 0))
 
-#Your API ID from my.telegram.org
-APP_ID = int(os.environ.get("APP_ID", "24500584"))
-
-#Your API Hash from my.telegram.org
-API_HASH = os.environ.get("API_HASH", "449da69cf4081dc2cc74eea828d0c490")
-
-#Your db channel Id
-CHANNEL_ID = int(os.environ.get("CHANNEL_ID", "-1002448203068"))
-
-#OWNER ID
-OWNER_ID = int(os.environ.get("OWNER_ID", "1047253913"))
-
-#Port
-PORT = os.environ.get("PORT", "8080")
-
-#Database 
-DB_URI = os.environ.get("DATABASE_URL", "mongodb+srv://chattaravikiran2001:6nJQC6pb3wLf1zCu@cluster1.daxfzgr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster1")
+# ===== Database Configuration ===== #
+CHANNEL_ID = int(os.environ.get("CHANNEL_ID", 0))
+DB_URI = os.environ.get("DATABASE_URL", "")
 DB_NAME = os.environ.get("DATABASE_NAME", "Cluster1")
 
+# ===== Force Subscription Settings ===== #
+JOIN_REQUEST_ENABLE = bool(os.environ.get("JOIN_REQUEST_ENABLED", False))
+FORCE_SUB_CHANNEL_1 = int(os.environ.get("FORCE_SUB_CHANNEL_1", 0)) if os.environ.get("FORCE_SUB_CHANNEL_1") else None
+FORCE_SUB_CHANNEL_2 = int(os.environ.get("FORCE_SUB_CHANNEL_2", 0)) if os.environ.get("FORCE_SUB_CHANNEL_2") else None
+FORCE_SUB_CHANNEL_3 = int(os.environ.get("FORCE_SUB_CHANNEL_3", 0)) if os.environ.get("FORCE_SUB_CHANNEL_3") else None
+FORCE_SUB_CHANNEL_4 = int(os.environ.get("FORCE_SUB_CHANNEL_4", 0)) if os.environ.get("FORCE_SUB_CHANNEL_4") else None
 
-JOIN_REQUEST_ENABLE = os.environ.get("JOIN_REQUEST_ENABLED", None)
-#force sub channel id, if you want enable force sub
-FORCE_SUB_CHANNEL_1 = int(os.environ.get("FORCE_SUB_CHANNEL_1", "-1002650862527"))
-FORCE_SUB_CHANNEL_2 = int(os.environ.get("FORCE_SUB_CHANNEL_2", "-1002331321194"))
-FORCE_SUB_CHANNEL_3 = int(os.environ.get("FORCE_SUB_CHANNEL_3", "-1001956677010"))
-FORCE_SUB_CHANNEL_4 = int(os.environ.get("FORCE_SUB_CHANNEL_4", "-1002508438247"))
+# ===== Bot Performance Settings ===== #
+TG_BOT_WORKERS = int(os.environ.get("TG_BOT_WORKERS", 4))
+PORT = os.environ.get("PORT", "8080")
 
-TG_BOT_WORKERS = int(os.environ.get("TG_BOT_WORKERS", "4"))
-TIME_WINDOW = int(os.getenv("TIME_WINDOW", 60))  # e.g. 60 seconds
-MAX_REQUESTS = int(os.getenv("MAX_REQUESTS", 5))  # e.g. 3 requests per TIME_WINDOW
-GLOBAL_REQUESTS = int(os.getenv("GLOBAL_REQUESTS", 30))  # e.g. 30 requests globally
-GLOBAL_TIME_WINDOW = int(os.getenv("GLOBAL_TIME_WINDOW", 60))  # e.g. in 60 seconds
-USER_REQUESTS = int(os.getenv("USER_REQUESTS", 3))  # default 3 per TIME_WINDOW
-# Flood Control
-FLOOD_MAX_REQUESTS = 5  # Requests per...
-FLOOD_TIME_WINDOW = 10  # ...10 seconds
-FLOOD_COOLDOWN = 30     # 30s ban for spammers
-    
-# Boot Settings
-BOOT_DELAY = 0.8  # Seconds between boot messages
- MIN_BOOT_STEPS = 3  # Minimum steps to show
-#start message
-START_PIC = os.environ.get("START_PIC","")
+# ===== Rate Limiting Configuration ===== #
+TIME_WINDOW = int(os.getenv("TIME_WINDOW", 60))  # 60 seconds
+MAX_REQUESTS = int(os.getenv("MAX_REQUESTS", 5))  # 5 requests per TIME_WINDOW
+GLOBAL_REQUESTS = int(os.getenv("GLOBAL_REQUESTS", 30))  # 30 requests globally
+GLOBAL_TIME_WINDOW = int(os.getenv("GLOBAL_TIME_WINDOW", 60))  # in 60 seconds
+USER_REQUESTS = int(os.getenv("USER_REQUESTS", 3))  # 3 per TIME_WINDOW
+
+# ===== Flood Control Settings ===== #
+FLOOD_MAX_REQUESTS = int(os.getenv("FLOOD_MAX_REQUESTS", 5))  # Requests per...
+FLOOD_TIME_WINDOW = int(os.getenv("FLOOD_TIME_WINDOW", 10))  # ...10 seconds
+FLOOD_COOLDOWN = int(os.getenv("FLOOD_COOLDOWN", 30))     # 30s ban for spammers
+
+# ===== Boot Animation Settings ===== #
+BOOT_DELAY = float(os.getenv("BOOT_DELAY", 0.8))  # Seconds between boot messages
+MIN_BOOT_STEPS = int(os.getenv("MIN_BOOT_STEPS", 3))  # Minimum steps to show
+
+# ===== Message Configurations ===== #
+START_PIC = os.environ.get("START_PIC", "")
 START_MSG = os.environ.get(
     "START_MESSAGE",
-    "👒 Oi oi, {mention}!\n\n<blockquote>LUFFY here! Got a secret map from @CulturedTeluguweeb? I’ll grab that anime treasure faster than Sanji serves dinner! 🍜🏴‍☠️</blockquote>"
+    "👒 Oi oi, {mention}!\n\n<blockquote>LUFFY here! Got a secret map from @CulturedTeluguweeb? I'll grab that anime treasure faster than Sanji serves dinner! 🍜🏴‍☠️</blockquote>"
 )
-try:
-    ADMINS=[]
-    for x in (os.environ.get("ADMINS", " ").split()):
-        ADMINS.append(int(x))
-except ValueError:
-        raise Exception("Your Admins list does not contain valid integers.")
 
-#Force sub message 
 FORCE_PIC = os.environ.get("FORCE_PIC", "")
+FORCE_MSG = os.environ.get(
+    "FORCE_SUB_MESSAGE", 
+    "ᴀʀᴀ ᴀʀᴀ!! {mention}\n\n<b><blockquote>ᴀʀᴀ ʏᴏᴜ'ʀᴇ ᴍɪssɪɴɢ ᴏᴜᴛ ᴏɴ sᴏᴍᴇ sᴇʀɪᴏᴜs ᴀᴄᴛɪᴏɴ.ᴛo ᴜɴʟᴏᴄᴋ ᴀʟʟ ғᴇᴀᴛᴜʀᴇs ᴀɴᴅ ᴀᴄᴄᴇss ғɪʟᴇs, ᴊᴏɪɴ ᴀʟʟ of �ᴏᴜʀ ᴄʜᴀɴɴᴇʟs ʙᴇʟᴏᴡ: !</blockquote></b>"
+)
 
-FORCE_MSG = os.environ.get("FORCE_SUB_MESSAGE", "ᴀʀᴀ ᴀʀᴀ!! {mention}\n\n<b><blockquote>ᴀʀᴀ ʏᴏᴜ'ʀᴇ ᴍɪssɪɴɢ ᴏᴜᴛ ᴏɴ sᴏᴍᴇ sᴇʀɪᴏᴜs ᴀᴄᴛɪᴏɴ.ᴛo ᴜɴʟᴏᴄᴋ ᴀʟʟ ғᴇᴀᴛᴜʀᴇs ᴀɴᴅ ᴀᴄᴄᴇss ғɪʟᴇs, ᴊᴏɪɴ ᴀʟʟ of ᴏᴜʀ ᴄʜᴀɴɴᴇʟs ʙᴇʟᴏᴡ: !</blockquote></b>")
+CUSTOM_CAPTION = os.environ.get("CUSTOM_CAPTION", "")
 
-#set your Custom Caption here, Keep None for Disable Custom Caption
-CUSTOM_CAPTION = os.environ.get("")
+# ===== Media Settings ===== #
+PICS = [pic for pic in os.environ.get(
+    "PICS", 
+    "https://envs.sh/sJX.jpg https://envs.sh/Uc0.jpg https://envs.sh/UkA.jpg https://envs.sh/Uk_.jpg https://envs.sh/Ukc.jpg https://envs.sh/UkZ.jpg https://envs.sh/UkK.jpg"
+).split() if pic]
 
-#Collection of pics for Bot // #Optional but atleast one pic link should be replaced if you don't want predefined links
-PICS = (os.environ.get("PICS", "https://envs.sh/sJX.jpg https://envs.sh/Uc0.jpg https://envs.sh/UkA.jpg https://envs.sh/Uk_.jpg https://envs.sh/Ukc.jpg https://envs.sh/UkZ.jpg https://envs.sh/UkK.jpg")).split() #Required
-#set True if you want to prevent users from forwarding files from bot
-PROTECT_CONTENT = False if os.environ.get('PROTECT_CONTENT', "True") == "True" else False
+PROTECT_CONTENT = os.environ.get('PROTECT_CONTENT', "True") == "True"
+DISABLE_CHANNEL_BUTTON = os.environ.get("DISABLE_CHANNEL_BUTTON", "False") == "True"
 
-# Auto delete time in seconds.
-# Auto delete time set to 15 minutes (900 seconds)
-AUTO_DELETE_TIME = int(os.getenv("AUTO_DELETE_TIME", "900"))
+# ===== Auto Delete Settings ===== #
+AUTO_DELETE_TIME = int(os.getenv("AUTO_DELETE_TIME", 900))  # 15 minutes
 AUTO_CLEAN = os.getenv("AUTO_CLEAN", "False").lower() == "true"
 DELETE_DELAY = int(os.getenv("DELETE_DELAY", 10))
-# Convert to human-readable format
-minutes = AUTO_DELETE_TIME // 60
-seconds = AUTO_DELETE_TIME % 60
 
-if minutes > 0:
-    AUTO_DELETE_HUMAN = f"{minutes} minute{'s' if minutes != 1 else ''} {seconds} second{'s' if seconds != 1 else ''}"
-else:
-    AUTO_DELETE_HUMAN = f"{seconds} second{'s' if seconds != 1 else ''}"
+# Human-readable format
+minutes, seconds = divmod(AUTO_DELETE_TIME, 60)
+AUTO_DELETE_HUMAN = (
+    f"{minutes} minute{'s' if minutes != 1 else ''} "
+    f"{seconds} second{'s' if seconds != 1 else ''}"
+    if minutes > 0 
+    else f"{seconds} second{'s' if seconds != 1 else ''}"
+)
 
-# Message shown before auto-deletion
 AUTO_DELETE_MSG = os.environ.get(
     "AUTO_DELETE_MSG",
     f"⚠️ Dᴜᴇ ᴛᴏ Cᴏᴘʏʀɪɢʜᴛ ɪssᴜᴇs....\n\n"
-    f"<blockquote>This file won’t stay long! You’ve got {AUTO_DELETE_HUMAN} before I throw it overboard!🏴‍☠️. "
+    f"<blockquote>This file won't stay long! You've got {AUTO_DELETE_HUMAN} before I throw it overboard!🏴‍☠️. "
     f"Please ensure you have saved any necessary content before this time.</blockquote>"
 )
 
-# Message shown after deletion
 AUTO_DEL_SUCCESS_MSG = os.environ.get(
     "AUTO_DEL_SUCCESS_MSG",
     "⚡ Straw Hat LUFFY reporting:\nFile deleted with a Gomu Gomu no Slam! 💥🌀🗑️\nCatch ya later, nakama! 👒🏴‍☠️"
 )
-      #  reply = await message.reply(AUTO_DEL_SUCCESS_MSG)
-      #  await auto_delete(reply, message)
 
-
-
-#Set true if you want Disable your Channel Posts Share button
-DISABLE_CHANNEL_BUTTON = os.environ.get("DISABLE_CHANNEL_BUTTON", None) == 'False'
-
+# ===== Text Templates ===== #
 BOT_STATS_TEXT = "<b><blockquote>BOT UPTIME</b>\n{uptime}</blockquote>"
-USER_REPLY_TEXT = "<blockquote>💖 I’m loyal to one place—@CulturedTeluguweeb! That’s where my real journey begins. For anyone else... sorry, no adventure! 👒</blockquote>"
-#await reply_with_clean(message, USER_REPLY_TEXT)
+USER_REPLY_TEXT = "<blockquote>💖 I'm loyal to one place—@CulturedTeluguweeb! That's where my real journey begins. For anyone else... sorry, no adventure! 👒</blockquote>"
 
+# ===== Admin Configuration ===== #
+try:
+    ADMINS = [int(x) for x in os.environ.get("ADMINS", "").split() if x]
+except ValueError:
+    raise Exception("Your Admins list does not contain valid integers.")
 
-ADMINS.append(OWNER_ID)
-ADMINS.append(6266529037)
+ADMINS.extend([OWNER_ID])
 
+# ===== Logging Configuration ===== #
 LOG_FILE_NAME = "filesharingbot.txt"
 
 logging.basicConfig(
@@ -129,7 +116,7 @@ logging.basicConfig(
     handlers=[
         RotatingFileHandler(
             LOG_FILE_NAME,
-            maxBytes=50000000,
+            maxBytes=50_000_000,  # 50MB
             backupCount=10
         ),
         logging.StreamHandler()
@@ -139,3 +126,13 @@ logging.getLogger("pyrogram").setLevel(logging.WARNING)
 
 def LOGGER(name: str) -> logging.Logger:
     return logging.getLogger(name)
+
+# ===== Validation Checks ===== #
+if not TG_BOT_TOKEN:
+    raise ValueError("TG_BOT_TOKEN environment variable is required!")
+
+if not all([APP_ID, API_HASH]):
+    raise ValueError("APP_ID and API_HASH environment variables are required!")
+
+if not CHANNEL_ID:
+    raise ValueError("CHANNEL_ID environment variable is required!")
