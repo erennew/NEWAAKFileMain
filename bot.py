@@ -1,6 +1,8 @@
 from aiohttp import web
 from plugins import web_server
 import time
+START_TIME = time.time()
+
 
 import pyromod.listen
 from pyrogram import Client
@@ -74,13 +76,14 @@ class Bot(Client):
         self.set_parse_mode(ParseMode.HTML)
         self.LOGGER(__name__).info(f"Bot Running..!\n\nCreated by \nhttps://t.me/WeekendsBotz")
         self.LOGGER(__name__).info(r"""       
-  ┈┈┈╱▔▔▔▔▔▔╲┈╭━━━━━━━╮┈┈
-┈┈▕┈╭━╮╭━╮┈▏┃𝕎𝕖𝕖𝕜𝕖𝕟𝕕𝕤𝔹𝕠𝕥𝕫
+┈┈┈╱▔▔▔▔▔▔╲┈╭━━━━━━━╮┈┈
+┈┈▕┈╭━╮╭━╮┈▏┃𝕽𝖆𝖛𝖎𝕭𝖔𝖙𝖘
 ┈┈▕┈┃╭╯╰╮┃┈▏╰┳━━━━━━╯┈┈
 ┈┈▕┈╰╯╭╮╰╯┈▏┈┃┈┈┈┈┈
 ┈┈▕┈┈┈┃┃┈┈┈▏━╯┈┈┈┈┈
 ┈┈▕┈┈┈╰╯┈┈┈▏┈┈┈┈┈┈┈
 ┈┈▕╱╲╱╲╱╲╱╲▏┈┈┈┈┈┈┈
+
         """)
 
         # Start web server
@@ -92,3 +95,4 @@ class Bot(Client):
     async def stop(self, *args):
         await super().stop()
         self.LOGGER(__name__).info("Bot stopped.")
+__all__ = ["Bot", "START_TIME"]
