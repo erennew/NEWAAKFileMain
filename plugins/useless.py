@@ -84,21 +84,30 @@ async def stats(client, message: Message):
 @Bot.on_message(filters.command("ping") & filters.user(ADMINS))
 async def ping(client, message: Message):
     start = time.time()
-    
-    # Step 1: Send initial "pinging" message
+
+    # Send the "pinging" message
     reply = await message.reply_text("🏴‍☠️ Pinging the Sunny...")
 
-    await asyncio.sleep(0.5)  # Short pause
+    await asyncio.sleep(0.5)
 
-    # Step 2: Calculate ping and edit the reply
+    # Calculate ping time
     end = time.time()
     ping_time = int((end - start) * 1000)
+
+    # Edit the reply with the ping time
     await reply.edit_text(f"🏴‍☠️ Pong! Luffy's up and stretchin' in <code>{ping_time}ms</code>!")
 
-    # Step 3: Wait and then delete both the reply and command
+    # Delete both reply and command after delay
     await asyncio.sleep(AUTO_DELETE_TIME)
-    await reply.delete()
-    await message.delete()
+    try:
+        await reply.delete()
+    except:
+        pass
+
+    try:
+        await message.delete()
+    except:
+        pass
 
 
 @Bot.on_message(filters.private & filters.incoming)
