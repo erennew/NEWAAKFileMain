@@ -25,6 +25,7 @@ from NEWAAKFileMain.helper_func.ratelimit import request_timestamps, GLOBAL_REQU
 import platform
 import time
 import psutil
+from helper_func import reply_with_clean
 
 def get_readable_time(seconds):
     count = 0
@@ -75,7 +76,8 @@ async def stats(client, message: Message):
         f"🧃 Keep the meat ready, more adventures ahead!"
     )
 
-    await message.reply_text(text, quote=True)
+    await reply_with_clean(message, text)
+
 
 @Bot.on_message(filters.command("ping") & filters.user(ADMINS))
 async def ping(client, message: Message):
@@ -83,9 +85,14 @@ async def ping(client, message: Message):
     reply = await message.reply_text("🏴‍☠️ Pinging the Sunny...")
     end = time.time()
     ping_time = int((end - start) * 1000)
+    await asyncio.sleep(0.5)  # short delay before reply
     await reply.edit_text(f"🏴‍☠️ Pong! Luffy's up and stretchin' in <code>{ping_time}ms</code>!")
+    await asyncio.sleep(AUTO_DELETE_TIME)
+    await reply.delete()
+    await message.delete()
+
 
 @Bot.on_message(filters.private & filters.incoming)
 async def useless(_, message: Message):
     if USER_REPLY_TEXT:
-        await message.reply(USER_REPLY_TEXT)
+        await reply_with_clean(message, USER_REPLY_TEXT)
