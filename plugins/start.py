@@ -76,7 +76,7 @@ async def start_command(client: Client, message: Message):
         return
 
     # 🌞 Normal Greeting
-    return await reply_with_clean(message, START_MSG.format(message.from_user.first_name))
+ #   return await reply_with_clean(message, START_MSG.format(message.from_user.first_name))
 
 
     # Boot animation setup
