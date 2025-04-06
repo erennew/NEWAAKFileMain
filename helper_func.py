@@ -9,7 +9,7 @@ from pyrogram.enums import ChatMemberStatus
 from config import FORCE_SUB_CHANNEL_1, FORCE_SUB_CHANNEL_2, FORCE_SUB_CHANNEL_3, FORCE_SUB_CHANNEL_4, ADMINS, AUTO_DELETE_TIME, AUTO_DEL_SUCCESS_MSG
 from pyrogram.errors.exceptions.bad_request_400 import UserNotParticipant
 from pyrogram.errors import FloodWait
-
+from config import AUTO_CLEAN, DELETE_DELAY
 async def is_subscribed(filter, client, update):
     if not (FORCE_SUB_CHANNEL_1 or FORCE_SUB_CHANNEL_2 or FORCE_SUB_CHANNEL_3 or FORCE_SUB_CHANNEL_4):
         return True
@@ -159,6 +159,14 @@ def is_user_limited(user_id):
 
     if len(user_queue) >= USER_REQUESTS:
         return True
+
+async def reply_with_clean(message, text):
+    reply = await message.reply_text(text)
+    if AUTO_CLEAN:
+        await asyncio.sleep(DELETE_DELAY)
+        await reply.delete()
+        await message.delete()
+    return reply
 
     # No limit reached — add timestamps
     request_timestamps.append(now)
