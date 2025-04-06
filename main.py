@@ -1,8 +1,10 @@
-# Replace:
-Bot().run()
+from bot import Bot
+import asyncio
 
-# With:
-if __name__ == "__main__":
+async def main():
     bot = Bot()
-    bot.start()  # Initialize
-    bot.run()    # Keep running
+    await bot.start()
+    await bot.run()
+
+if __name__ == "__main__":
+    asyncio.run(main())
