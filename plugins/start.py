@@ -43,35 +43,41 @@ user_rate_limit = {}
 @Bot.on_message(filters.command("start") & filters.private & subscribed)
 async def start_command(client: Client, message: Message):
     user_id = message.from_user.id
+
+    # Add user if not present
     if not await present_user(user_id):
         try:
             await add_user(user_id)
         except:
             pass
-	    # 🧃 Check rate limit
-    if is_user_limited(user_id):
-        return await reply_with_clean("Too many requests! Please wait a bit ⏳")
 
-    # Your normal start command logic
-    return await reply_with_clean(START_MSG.format(message.from_user.first_name))
-    hour = datetime.now().hour
-    if hour >= 22 or hour < 6:
-        await reply_with_clean("🌙 Ara Ara~ It’s sleepy hours, but LUFFY's still awake to guard your files! 🛌👒")
-	await asyncio.sleep(AUTO_DELETE_TIME)
-        await reply.delete()
-        await message.delete()
-        return
     # Rate limit check
+    if is_user_limited(user_id):
+        return await reply_with_clean(message, "Too many requests! Please wait a bit ⏳")
+
     now = time.time()
     reqs = user_rate_limit.get(user_id, [])
     reqs = [t for t in reqs if now - t < TIME_WINDOW]
+
     if len(reqs) >= MAX_REQUESTS:
         wait_time = int(TIME_WINDOW - (now - reqs[0]))
-        await reply_with_clean(f"⚠️ Slow down, nakama! You're too fast for LUFFY! Wait a bit and try again~ 💤\n\nTry again in <b>{wait_time}</b> seconds. 🐢")
-	
+        return await reply_with_clean(message, f"⚠️ Slow down, nakama! You're too fast for LUFFY! 💤\nTry again in <b>{wait_time}</b> seconds.")
 
     reqs.append(now)
-    user_rate_limit[id] = reqs
+    user_rate_limit[user_id] = reqs
+
+    # 🌙 Night Mode Greeting
+    hour = datetime.now().hour
+    if hour >= 22 or hour < 6:
+        reply = await message.reply("🌙 Ara Ara~ It’s sleepy hours, but LUFFY's still awake to guard your files! 🛌👒")
+        await asyncio.sleep(AUTO_DELETE_TIME)
+        await reply.delete()
+        await message.delete()
+        return
+
+    # 🌞 Normal Greeting
+    return await reply_with_clean(message, START_MSG.format(message.from_user.first_name))
+
 
     # Boot animation setup
   #  progress = await message.reply("👒 Booting LUFFY File Core...")
