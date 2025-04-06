@@ -27,3 +27,4 @@ async def del_user(user_id: int):
 # Get total user count
 async def total_users():
     return user_data.count_documents({})
+user_data.create_index([('_id', pymongo.ASCENDING)], unique=True)
