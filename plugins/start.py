@@ -232,11 +232,27 @@ async def start_command(client: Client, message: Message):
         ]
     )
 
-if START_PIC:
-    try:
-        reply = await message.reply_photo(
-            photo=random.choice(PICS),
-            caption=START_MSG.format(
+    if START_PIC:
+        try:
+            reply = await message.reply_photo(
+                photo=random.choice(PICS),
+                caption=START_MSG.format(
+                    first=message.from_user.first_name,
+                    last=message.from_user.last_name,
+                    username=None if not message.from_user.username else '@' + message.from_user.username,
+                    mention=message.from_user.mention,
+                    id=message.from_user.id
+                ),
+                reply_markup=reply_markup,
+                quote=True
+            )
+            await auto_delete(reply, message)
+        except Exception as e:
+            print(f"Error replying with photo: {e}")
+            await message.reply_text("Sorry, there was an issue with the photo.")
+    else:
+        await message.reply_text(
+            text=START_MSG.format(
                 first=message.from_user.first_name,
                 last=message.from_user.last_name,
                 username=None if not message.from_user.username else '@' + message.from_user.username,
@@ -244,34 +260,30 @@ if START_PIC:
                 id=message.from_user.id
             ),
             reply_markup=reply_markup,
+            disable_web_page_preview=True,
             quote=True
         )
-        await auto_delete(reply, message)  # Corrected indentation here
-    except Exception as e:
-        print(f"Error replying with photo: {e}")
-        # Optionally, reply with text if there's an issue
-        await message.reply_text("Sorry, there was an issue with the photo.")
-else:
-    await message.reply_text(
-        text=START_MSG.format(
-            first=message.from_user.first_name,
-            last=message.from_user.last_name,
-            username=None if not message.from_user.username else '@' + message.from_user.username,
-            mention=message.from_user.mention,
-            id=message.from_user.id
-        ),
-        reply_markup=reply_markup,
-        disable_web_page_preview=True,
-        quote=True
-    )
-
-	
 
 
 
 # =====================================================================================##
 
-WAIT_MSG = """<b><blockquote>I will buy you a lollypop Be patient ...</blockquote></b>"""
+#WAIT_MSG = """<b><blockquote>I will buy you a lollypop Be patient ...</blockquote></b>"""
+#import random
+
+WAIT_MESSAGES = [
+    "☠️ Yo! Luffy here! Hold on tight and <b>wait a sec</b>, the adventure’s loading... 🍖",
+    "🌀 GEAR 2... ACTIVATING! Give me a moment, nakama! Just <b>wait a little</b>! 💨",
+    "🍖 <b>Wait up!</b> Meat first, files later! I'm grabbing it for ya!",
+    "⚓ Just <b>wait for it</b>—we're hoisting the sail! Captain Luffy’s on it! ☀️",
+    "🔥 Gear 5 Vibes Loading... <b>Wait right there</b>, this’ll be legendary! 💥",
+    "💬 Zoro got lost again... So while he’s wandering, <b>you wait</b>, I’m fetching your stuff! 🗺️",
+    "🎩 Hold onto your hat! I’m stretching to grab your request! Just <b>wait a sec</b>! 🏴‍☠️",
+    "⏳ <b>Wait patiently!</b> This will be faster than Sanji kickin’ someone for disrespectin' Nami! 💨"
+]
+
+def get_wait_msg():
+    return f"<blockquote>{random.choice(WAIT_MESSAGES)}</blockquote>"
 
 REPLY_ERROR = """<code>Use this command as a replay to any telegram message with out any spaces.</code>"""
 
@@ -336,7 +348,7 @@ async def not_joined(client: Client, message: Message):
 
 @Bot.on_message(filters.command('users') & filters.private & filters.user(ADMINS))
 async def get_users(client: Bot, message: Message):
-    msg = await client.send_message(chat_id=message.chat.id, text=WAIT_MSG)
+    msg = await client.send_message(chat_id=message.chat.id, text=get_wait_msg())
     users = await full_userbase()
     await msg.edit(f"{len(users)} users are using this bot")
 
