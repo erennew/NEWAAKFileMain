@@ -20,7 +20,8 @@ from pyrogram import filters
 from pyrogram.types import Message
 from bot import Bot, START_TIME
 from config import ADMINS, USER_REPLY_TEXT
-from database.users import full_userbase
+from database.database import full_userbase
+
 from helper_func import request_timestamps, GLOBAL_REQUESTS, TIME_WINDOW, USER_REQUESTS, reply_with_clean
 import platform
 from main import START_TIME
