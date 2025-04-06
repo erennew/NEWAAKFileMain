@@ -82,53 +82,62 @@ async def start_command(client: Client, message: Message):
     # Boot animation setup
   #  progress = await message.reply("👒 Booting LUFFY File Core...")
 
-    boot_sequences = [
+    # Replace your existing boot_sequences with this:
+boot_sequences = [
+    # Gear 2 Sequence (Fast Startup)
     [
-        "🧭 Setting Sail from East Blue...",
-        "🔍 Scouting the Grand Line routes...",
-        "🏴‍☠️ Crew check done! Straw Hat systems online!",
-        "✅ LUFFY IS READY FOR ADVENTURE! ☠️"
+        "⚡ <b>Gear 2: Jet Pistol Loading!</b>",
+        "💨 <i>Blood pumping... Systems accelerating!</i>",
+        "✅ <b>LUFFY-BOT READY TO SERVE!</b> 🏴‍☠️"
     ],
+    
+    # Gear 5 Sequence (Premium Experience)
     [
-        "⚙️ Activating Gear 2...",
-        "💨 Speeding up Straw Hat Systems...",
-        "✅ LUFFY READY TO FIGHT! 💥"
+        "🌀 <b>NIKA AWAKENING DETECTED!</b>",
+        "🥁 <i>Drums of Liberation beating...</i>",
+        "✨ <b>FULL POWER ACTIVATED!</b>",
+        "✅ <b>YOUR FILES WILL BE LEGENDARY!</b> 🌟"
     ],
+    
+    # Sunny Go Sequence (File Transfer Focus)
+    [
+        "⚓ <b>THOUSAND SUNNY DEPLOYED</b>",
+        "🧭 <i>Navigating to your files...</i>",
+        "📦 <b>CARGO HOLD OPENED</b>",
+        "✅ <b>READY FOR DOWNLOADS!</b> 📥"
+    ],
+    
+    # Emergency Startup
+    [
+        "🚨 <b>EMERGENCY BOOT SEQUENCE</b>",
+        "🔧 <i>Franky doing last-minute fixes...</i>",
+        "💥 <b>COLA POWER OVERRIDE!</b>",
+        "✅ <b>SYSTEMS ONLINE (KINDA)</b> 🤖"
+    ]
+]
 
+# Add this after boot_sequences:
+FLOOD_SEQUENCES = [
+    # Level 1: Friendly warning
     [
-        "⚙️ Gear 4: Boundman Engaged...",
-        "🔄 Recoil Boost Active...",
-        "✅ LET'S GO, CREW! 🔥"
+        "🌊 <b>Woah there nakama!</b>",
+        "<i>You're moving faster than Gear 2!</i>",
+        "⏳ Please wait 3 seconds between requests!"
     ],
+    
+    # Level 2: Stronger warning
     [
-        "⚙️ Gear 5: Nika Mode Loading...",
-        "🌟 Drums of Liberation echo...",
-        "✅ LUFFY IS IN FULL SWING! 🌀"
+        "⚡ <b>Conqueror's Haki Detected!</b>",
+        "<i>You're spamming like Blackbeard!</i>",
+        "🛑 5s cooldown activated..."
     ],
+    
+    # Level 3: Timeout
     [
-        "🌊 Calling Thousand Sunny...",
-        "🎩 Checking Straw Hat integrity...",
-        "✅ LUFFY CREW DEPLOYED! 💫"
-    ],
-    [
-        "⚓ Deploying haki across channels...",
-        "🌀 Summoning LUFFY clones...",
-        "✅ SHISHISHI~ Let's make some trouble! 😎"
-    ],
-    [
-        "🔧 FRANKY’s loading Cola Energy...",
-        "🚀 Docking LUFFY-Bot Systems...",
-        "✅ SUPER BOOT COMPLETE! 🤖"
-    ],
-    [
-        "🔥 SANJI’s Kitchen Prepping...",
-        "🥘 Diable Jambe Cooking in Progress...",
-        "✅ STRAW HATS FED AND READY! 🍖"
-    ],
-    [
-        "🗡️ ZORO is sharpening his blades...",
-        "🌪️ Santoryu Mode Activated...",
-        "✅ NO ONE GETS LOST THIS TIME! 😤"
+        "👹 <b>ADMIRAL ALERT!</b>",
+        "<i>Borsalino would be impressed by this spam...</i>",
+        "⏲️ 10s timeout enforced!",
+        "💢 <b>Zoro's getting lost from all this!</b>"
     ]
 ]
 
