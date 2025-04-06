@@ -129,44 +129,59 @@ class Bot(Client):
             self.log(__name__).error(f"❌ Web server failed: {e}")
             raise
 
-    async def start(self, use_qr=False, except_ids=None):  # Add these parameters
-        """Start the bot with full initialization"""
-        self.log(__name__).info("🚀 Initializing Luffy File Bot...")
-        await super().start()  # Don't pass the parameters here
+async def start(self, use_qr=False, except_ids=None):
+    """Fixed startup method for Pyrogram 2.x with proper async handling"""
+    self.log(__name__).info("🚀 Initializing Luffy File Bot...")
     
-        try:
-            # Get bot info
-            bot_me = await self.get_me()
-            self.username = bot_me.username
-            self.uptime = datetime.now()
-            
-            # Start background tasks
-            asyncio.create_task(self._reset_flood_counts())
-            
-            # Setup channels
-            await self._setup_force_sub_channels()
-            await self._verify_db_channel()
-            
-            # Web server
+    # Initialize Pyrogram client (without passing the parameters)
+    await super().start()
+    
+    try:
+        # 1. Bot Identity Verification
+        bot_me = await self.get_me()
+        self.username = bot_me.username
+        self.uptime = datetime.now()
+        self.log(__name__).info(f"🤖 Bot @{self.username} authenticated")
+
+        # 2. Database Initialization
+        if hasattr(self, 'db_channel'):
+            test_msg = await self.send_message(self.db_channel.id, "🔧 Connection test")
+            await test_msg.delete()
+            self.log(__name__).info("✅ Database channel verified")
+
+        # 3. Force Sub Channels Setup
+        self.invitelinks = {}
+        for i, channel_id in enumerate(config.FORCE_SUB_CHANNELS, 1):
+            try:
+                chat = await self.get_chat(channel_id)
+                link = chat.invite_link or await self.export_chat_invite_link(channel_id)
+                self.invitelinks[i] = link
+                self.log(__name__).info(f"🔗 Force sub channel {i}: {chat.title}")
+            except Exception as e:
+                self.log(__name__).error(f"❌ Channel {channel_id} setup failed: {e}")
+                raise
+
+        # 4. Background Services
+        asyncio.create_task(self._reset_flood_counts())
+        self.log(__name__).info("🔄 Flood control system activated")
+
+        # 5. Web Server (if applicable)
+        if hasattr(self, '_start_web_server'):
             await self._start_web_server()
-            
-            # Startup message
-            self.log(__name__).info(f"""
+
+        self.log(__name__).info(f"""
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃      🏴‍☠️ LUFFY ONLINE      ┃
 ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
 ┃• ID: @{self.username}
 ┃• Uptime: {self.uptime}
 ┃• Channels: {len(self.invitelinks)}
-┃• Flood Control: Active
-┃• Mode: {'DEBUG' if __debug__ else 'PRODUCTION'}
-┗━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-            """)
-            
-        except Exception as e:
-            self.log(__name__).critical(f"❌ Startup failed: {e}")
-            await self.stop()
-            sys.exit(1)
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━┛""")
+
+    except Exception as e:
+        self.log(__name__).critical(f"🔥 Startup failed: {e}")
+        await self.stop()
+        raise
 
     async def stop(self, *args):
         """Cleanly stop the bot"""
