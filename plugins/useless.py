@@ -86,6 +86,8 @@ async def stats(client, message: Message):
 async def ping(client, message: Message):
     start = time.time()
     reply = await message.reply_text("🏴‍☠️ Pinging the Sunny...")
+    await auto_delete_message(msg)
+    await auto_delete_message(message
     end = time.time()
     ping_time = int((end - start) * 1000)
     await asyncio.sleep(0.5)  # short delay before reply
