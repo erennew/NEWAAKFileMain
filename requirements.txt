@@ -10,3 +10,5 @@ dnspython
 # --- For-Web-Response ------- #
 aiohttp
 asyncio
+# --- For-System-Stats ------- #
+psutil
