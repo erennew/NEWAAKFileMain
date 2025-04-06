@@ -1,28 +1,29 @@
-#(©) WeekendsBotz
+# (©) RaviBots - Luffy Bot DB
 
-import pymongo, os
+import pymongo
 from config import DB_URI, DB_NAME
 
 dbclient = pymongo.MongoClient(DB_URI)
 database = dbclient[DB_NAME]
 user_data = database['users']
 
-async def present_user(user_id : int):
-    found = user_data.find_one({'_id': user_id})
-    return bool(found)
+# Check if a user exists in DB
+async def present_user(user_id: int):
+    return bool(user_data.find_one({'_id': user_id}))
 
+# Add new user
 async def add_user(user_id: int):
-    user_data.insert_one({'_id': user_id})
-    return
+    if not await present_user(user_id):
+        user_data.insert_one({'_id': user_id})
 
+# Return full user list
 async def full_userbase():
-    user_docs = user_data.find()
-    user_ids = []
-    for doc in user_docs:
-        user_ids.append(doc['_id'])
-        
-    return user_ids
+    return [doc['_id'] for doc in user_data.find()]
 
+# Remove user
 async def del_user(user_id: int):
     user_data.delete_one({'_id': user_id})
-    return
+
+# Get total user count
+async def total_users():
+    return user_data.count_documents({})
