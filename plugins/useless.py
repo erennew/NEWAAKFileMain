@@ -10,6 +10,7 @@ from bot import Bot, START_TIME
 from config import ADMINS, USER_REPLY_TEXT
 from database.database import full_userbase
 from helper_func import reply_with_clean, request_timestamps, GLOBAL_REQUESTS, TIME_WINDOW, USER_REQUESTS
+from pyrogram.enums import ParseMode
 
 # Auto-delete configuration from environment
 AUTO_DELETE_TIME = int(os.getenv("AUTO_DELETE_TIME", 900))  # 15 minutes default
@@ -61,7 +62,9 @@ async def stats(client, message: Message):
         f"  • Your: <code>{sum(1 for ts in request_timestamps if isinstance(ts, tuple) and ts[0] == message.from_user.id)}/{USER_REQUESTS}</code>"
     )
 
-    await reply_with_clean(message, report, parse_mode="HTML")
+    await reply_with_clean(message, report, parse_mode=ParseMode.HTML)
+
+
 
 @Bot.on_message(filters.command("ping") & filters.user(ADMINS))
 async def ping(client, message: Message):
