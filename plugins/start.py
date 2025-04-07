@@ -217,15 +217,23 @@ async def start_handler(client: Client, message: Message):
         await add_user(user_id)
 
 # Check for payload in start command
-try:
-    payload = message.command[1]
-    if payload:
-        file_id = await decode(payload)
+@Client.on_message(filters.command("start") & filters.private)
+async def start_handler(client: Client, message: Message):
+    try:
+        payload = message.command[1]
+        if payload:
+            file_id = await decode(payload)
 
-        if isinstance(file_id, str) and file_id.startswith("get-"):
-            file_id = file_id.replace("get-", "")
+            if isinstance(file_id, str) and file_id.startswith("get-"):
+                file_id = file_id.replace("get-", "")
 
-        message = await client.get_messages(DB_CHANNEL, int(file_id))
+            message = await client.get_messages(DB_CHANNEL, int(file_id))
+            # Proceed with file sending logic here...
+
+    except (IndexError, ValueError, Exception) as e:
+        await reply_with_clean(message, f"⚠️ Invalid or broken link.\n\n<code>{e}</code>")
+
+    # Continue with normal /start handling below this...
 
         # Boot sequence before sending files
         try:
