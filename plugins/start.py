@@ -20,6 +20,8 @@ from config import (
 from helper_func import subscribed, decode, get_messages, delete_file, is_user_limited
 from database.database import add_user, present_user
 from config import DB_CHANNEL
+from pyrogram.types import ChatPermissions
+
 PICS = os.environ.get("PICS", "").split() or [
     "https://i.ibb.co/Kx5mS6V5/x.jpg",
     "https://i.ibb.co/jZQHRzKv/x.jpg",
@@ -189,14 +191,20 @@ async def start_handler(client: Client, message: Message):
     is_flooding, level = await check_flood(user_id)
     if is_flooding:
         warning = random.choice(FLOOD_SEQUENCES[min(level, len(FLOOD_SEQUENCES) - 1)])
+
         if level == 2:
             until = int(time.time()) + FLOOD_COOLDOWN
-            await client.restrict_chat_member(
-                chat_id=message.chat.id,
-                user_id=user_id,
-                until_date=until,
-                permissions=ChatPermissions(can_send_messages=False)
-            )
+            try:
+                await client.restrict_chat_member(
+                    chat_id=message.chat.id,
+                    user_id=user_id,
+                    until_date=until,
+                    permissions=ChatPermissions(can_send_messages=False)
+                )
+                print(f"[🚫 Flood Block] User {user_id} muted for {FLOOD_COOLDOWN} seconds.")
+            except Exception as e:
+                print(f"[❌ Flood Restrict Error] {e}")  # Helpful if user is not in a group
+
         return await reply_with_clean(message, "\n".join(warning))
 
     # Add to DB
@@ -208,8 +216,9 @@ async def start_handler(client: Client, message: Message):
         payload = message.command[1]
         if payload:
             # Decode and get file
-            file_id = await decode(payload)
-            messages = await client.get_messages(DB_CHANNEL, file_id)
+            file_id = await decode(payload)  # should return an int, not a string or None
+            message = await client.get_messages(DB_CHANNEL, int(file_id))  # ✅
+
             
             # Boot sequence before sending files
             try:
