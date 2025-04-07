@@ -191,6 +191,7 @@ async def start_handler(client: Client, message: Message):
     is_flooding, level = await check_flood(user_id)
     if is_flooding:
         warning = random.choice(FLOOD_SEQUENCES[min(level, len(FLOOD_SEQUENCES) - 1)])
+        print(f"[⚠️ Flood Triggered] User: {user_id} | Level: {level}")  # 👈 Helpful debug log
 
         if level == 2:
             until = int(time.time()) + FLOOD_COOLDOWN
@@ -202,6 +203,10 @@ async def start_handler(client: Client, message: Message):
                     permissions=ChatPermissions(can_send_messages=False)
                 )
                 print(f"[🚫 Flood Block] User {user_id} muted for {FLOOD_COOLDOWN} seconds.")
+
+                # ✅ Schedule unmute task
+                asyncio.create_task(unmute_user(client, message.chat.id, user_id))
+
             except Exception as e:
                 print(f"[❌ Flood Restrict Error] {e}")  # Helpful if user is not in a group
 
@@ -215,9 +220,16 @@ async def start_handler(client: Client, message: Message):
     try:
         payload = message.command[1]
         if payload:
-            # Decode and get file
-            file_id = await decode(payload)  # should return an int, not a string or None
-            message = await client.get_messages(DB_CHANNEL, int(file_id))  # ✅
+            file_id = await decode(payload)
+
+            if isinstance(file_id, str) and file_id.startswith("get-"):
+                file_id = file_id.replace("get-", "")
+
+            message = await client.get_messages(DB_CHANNEL, int(file_id))
+        # Proceed with sending the file
+    except (IndexError, ValueError, Exception) as e:
+        await reply_with_clean(message, f"⚠️ Invalid or broken link.\n\n<code>{e}</code>")
+
 
             
             # Boot sequence before sending files
