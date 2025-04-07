@@ -216,53 +216,50 @@ async def start_handler(client: Client, message: Message):
     if not await present_user(user_id):
         await add_user(user_id)
 
-    # Check for payload in start command
-    try:
-        payload = message.command[1]
-        if payload:
-            file_id = await decode(payload)
+# Check for payload in start command
+try:
+    payload = message.command[1]
+    if payload:
+        file_id = await decode(payload)
 
-            if isinstance(file_id, str) and file_id.startswith("get-"):
-                file_id = file_id.replace("get-", "")
+        if isinstance(file_id, str) and file_id.startswith("get-"):
+            file_id = file_id.replace("get-", "")
 
-            message = await client.get_messages(DB_CHANNEL, int(file_id))
-        # Proceed with sending the file
-    except (IndexError, ValueError, Exception) as e:
-        await reply_with_clean(message, f"⚠️ Invalid or broken link.\n\n<code>{e}</code>")
+        message = await client.get_messages(DB_CHANNEL, int(file_id))
 
+        # Boot sequence before sending files
+        try:
+            progress = await message.reply("👒 Booting LUFFY File Core...")
+            for step in random.choice(boot_sequences):
+                await asyncio.sleep(random.uniform(0.5, 1.2))
+                await progress.edit(step)
+            await asyncio.sleep(0.5)
+            await progress.delete()
+        except Exception as e:
+            print(f"Boot animation error: {e}")
 
-            
-            # Boot sequence before sending files
-            try:
-                progress = await message.reply("👒 Booting LUFFY File Core...")
-                for step in random.choice(boot_sequences):
-                    await asyncio.sleep(random.uniform(0.5, 1.2))
-                    await progress.edit(step)
-                await asyncio.sleep(0.5)
-                await progress.delete()
-            except Exception as e:
-                print(f"Boot animation error: {e}")
+        # Send files
+        for msg in messages:
+            await msg.copy(
+                chat_id=message.chat.id,
+                caption=CUSTOM_CAPTION,
+                reply_markup=InlineKeyboardMarkup([[
+                    InlineKeyboardButton("📜 Pirate Log", callback_data="about"),
+                    InlineKeyboardButton("🗺️ Close Map", callback_data="close")
+                ]]),
+                protect_content=PROTECT_CONTENT
+            )
+            await asyncio.sleep(1)
 
-            # Send files
-            for msg in messages:
-                await msg.copy(
-                    chat_id=message.chat.id,
-                    caption=CUSTOM_CAPTION,
-                    reply_markup=InlineKeyboardMarkup([[
-                        InlineKeyboardButton("📜 Pirate Log", callback_data="about"),
-                        InlineKeyboardButton("🗺️ Close Map", callback_data="close")
-                    ]]),
-                    protect_content=PROTECT_CONTENT
-                )
-                await asyncio.sleep(1)
-            
-            # Auto delete if enabled
-            if AUTO_DELETE_MSG:
-                await asyncio.sleep(AUTO_DELETE_TIME)
-                await message.delete()
-            return
-    except IndexError:
-        pass  # No payload, continue to normal start
+        # Auto delete if enabled
+        if AUTO_DELETE_MSG:
+            await asyncio.sleep(AUTO_DELETE_TIME)
+            await message.delete()
+
+        return
+
+except (IndexError, ValueError, Exception) as e:
+    await reply_with_clean(message, f"⚠️ Invalid or broken link.\n\n<code>{e}</code>")
 
     # Night Mode
     if datetime.now().hour >= 22 or datetime.now().hour < 6:
