@@ -48,12 +48,12 @@ MIN_BOOT_STEPS = int(os.getenv("MIN_BOOT_STEPS", 3))
 # ===== Message Configurations ===== #
 START_PIC = os.environ.get("START_PIC", "")
 START_MSG = os.environ.get("START_MESSAGE", 
-    "👒 Oi oi, {mention}!\n\n<blockquote>LUFFY here! Got a secret map from @CulturedTeluguweeb? I'll grab that anime treasure faster than Sanji serves dinner! 🍜🏴‍☠️</blockquote>"
+    "👒 Oi oi, {mention}!\n\n""<blockquote>LUFFY here! Got a secret map from @CulturedTeluguweeb? I'll grab that anime treasure faster than Sanji serves dinner! 🍜🏴‍☠️</blockquote>"
 )
 
 FORCE_PIC = os.environ.get("FORCE_PIC", "")
 FORCE_MSG = os.environ.get("FORCE_SUB_MESSAGE", 
-    "ᴀʀᴀ ᴀʀᴀ!! {mention}\n\n<b><blockquote>ᴀʀᴀ ʏᴏᴜ'ʀᴇ ᴍɪssɪɴɢ ᴏᴜᴛ ᴏɴ sᴏᴍᴇ sᴇʀɪᴏᴜs ᴀᴄᴛɪᴏɴ. ᴛo ᴜɴʟᴏᴄᴋ ᴀʟʟ ғᴇᴀᴛᴜʀᴇs ᴀɴᴅ ᴀᴄᴄᴇss ғɪʟᴇs, ᴊᴏɪɴ ᴀʟʟ ᴏғ ᴏᴜʀ ᴄʜᴀɴɴᴇʟs ʙᴇʟᴏᴡ:!</blockquote></b>"
+    "ᴀʀᴀ ᴀʀᴀ!! {mention}\n\n""<b><blockquote>ᴀʀᴀ ʏᴏᴜ'ʀᴇ ᴍɪssɪɴɢ ᴏᴜᴛ ᴏɴ sᴏᴍᴇ sᴇʀɪᴏᴜs ᴀᴄᴛɪᴏɴ. ᴛo ᴜɴʟᴏᴄᴋ ᴀʟʟ ғᴇᴀᴛᴜʀᴇs ᴀɴᴅ ᴀᴄᴄᴇss ғɪʟᴇs, ᴊᴏɪɴ ᴀʟʟ ᴏғ ᴏᴜʀ ᴄʜᴀɴɴᴇʟs ʙᴇʟᴏᴡ:!</blockquote></b>"
 )
 
 CUSTOM_CAPTION = os.environ.get("CUSTOM_CAPTION", "")
