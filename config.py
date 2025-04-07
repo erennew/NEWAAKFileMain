@@ -27,7 +27,7 @@ FORCE_SUB_CHANNEL_4 = int(os.environ.get("FORCE_SUB_CHANNEL_4", 0))
 
 # ===== Bot Performance Settings ===== #
 TG_BOT_WORKERS = int(os.environ.get("TG_BOT_WORKERS", 4))
-PORT = os.environ.get("PORT", "8080")
+PORT = int(os.environ.get("PORT", 8080))  # fallback to 8000 if PORT not set
 
 # ===== Rate Limiting Configuration ===== #
 TIME_WINDOW = int(os.getenv("TIME_WINDOW", 60))
