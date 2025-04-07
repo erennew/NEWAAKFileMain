@@ -20,7 +20,6 @@ from config import (
 from helper_func import subscribed, decode, get_messages, delete_file, is_user_limited
 from database.database import add_user, present_user
 from config import DB_CHANNEL
-from pyrogram.types import ChatPermissions
 
 PICS = os.environ.get("PICS", "").split() or [
     "https://i.ibb.co/Kx5mS6V5/x.jpg",
@@ -131,11 +130,21 @@ async def reply_with_clean(message, text, **kwargs):
     asyncio.create_task(auto_delete(reply, message))
     return reply
 
+async def unmute_user(client: Client, chat_id: int, user_id: int):
+    await asyncio.sleep(FLOOD_COOLDOWN)
+    try:
+        await client.restrict_chat_member(
+            chat_id=chat_id,
+            user_id=user_id,
+            permissions=ChatPermissions(can_send_messages=True)
+        )
+    except Exception as e:
+        print(f"[❌ Unmute Error] {e}")
+
 @Bot.on_message(filters.command("start") & filters.private)
 async def start_handler(client: Client, message: Message):
     user_id = message.from_user.id
     
-    # First check if user is subscribed
     if not await subscribed(client, message):
         invite_links = await create_invite_links(client)
         buttons = []
@@ -161,38 +170,23 @@ async def start_handler(client: Client, message: Message):
         except IndexError:
             pass
 
-        if FORCE_PIC:
-            return await message.reply_photo(
-                photo=random.choice(PICS),
-                caption=FORCE_MSG.format(
-                    first=message.from_user.first_name,
-                    last=message.from_user.last_name,
-                    username=f"@{message.from_user.username}" if message.from_user.username else None,
-                    mention=message.from_user.mention,
-                    id=message.from_user.id
-                ),
-                reply_markup=InlineKeyboardMarkup(buttons),
-                quote=True
-            )
-        else:
-            return await message.reply(
-                text=FORCE_MSG.format(
-                    first=message.from_user.first_name,
-                    last=message.from_user.last_name,
-                    username=f"@{message.from_user.username}" if message.from_user.username else None,
-                    mention=message.from_user.mention,
-                    id=message.from_user.id
-                ),
-                reply_markup=InlineKeyboardMarkup(buttons),
-                quote=True
-            )
+        pic_or_msg = FORCE_PIC and message.reply_photo or message.reply
+        return await pic_or_msg(
+            photo=random.choice(PICS) if FORCE_PIC else None,
+            caption=FORCE_MSG.format(
+                first=message.from_user.first_name,
+                last=message.from_user.last_name,
+                username=f"@{message.from_user.username}" if message.from_user.username else None,
+                mention=message.from_user.mention,
+                id=message.from_user.id
+            ),
+            reply_markup=InlineKeyboardMarkup(buttons),
+            quote=True
+        )
 
-    # Flood Check
     is_flooding, level = await check_flood(user_id)
     if is_flooding:
         warning = random.choice(FLOOD_SEQUENCES[min(level, len(FLOOD_SEQUENCES) - 1)])
-        print(f"[⚠️ Flood Triggered] User: {user_id} | Level: {level}")  # 👈 Helpful debug log
-
         if level == 2:
             until = int(time.time()) + FLOOD_COOLDOWN
             try:
@@ -202,74 +196,44 @@ async def start_handler(client: Client, message: Message):
                     until_date=until,
                     permissions=ChatPermissions(can_send_messages=False)
                 )
-                print(f"[🚫 Flood Block] User {user_id} muted for {FLOOD_COOLDOWN} seconds.")
-
-                # ✅ Schedule unmute task
                 asyncio.create_task(unmute_user(client, message.chat.id, user_id))
-
             except Exception as e:
-                print(f"[❌ Flood Restrict Error] {e}")  # Helpful if user is not in a group
-
+                print(f"[❌ Flood Restrict Error] {e}")
         return await reply_with_clean(message, "\n".join(warning))
 
-    # Add to DB
     if not await present_user(user_id):
         await add_user(user_id)
 
-# Check for payload in start command
-@Client.on_message(filters.command("start") & filters.private)
-async def start_handler(client: Client, message: Message):
     try:
         payload = message.command[1]
         if payload:
             file_id = await decode(payload)
-
             if isinstance(file_id, str) and file_id.startswith("get-"):
                 file_id = file_id.replace("get-", "")
+            messages = await get_messages(DB_CHANNEL, int(file_id))
 
-            message = await client.get_messages(DB_CHANNEL, int(file_id))
-            # Proceed with file sending logic here...
-
-    except (IndexError, ValueError, Exception) as e:
-        await reply_with_clean(message, f"⚠️ Invalid or broken link.\n\n<code>{e}</code>")
-
-    # Continue with normal /start handling below this...
-
-        # Boot sequence before sending files
-        try:
             progress = await message.reply("👒 Booting LUFFY File Core...")
             for step in random.choice(boot_sequences):
                 await asyncio.sleep(random.uniform(0.5, 1.2))
                 await progress.edit(step)
             await asyncio.sleep(0.5)
             await progress.delete()
-        except Exception as e:
-            print(f"Boot animation error: {e}")
 
-        # Send files
-        for msg in messages:
-            await msg.copy(
-                chat_id=message.chat.id,
-                caption=CUSTOM_CAPTION,
-                reply_markup=InlineKeyboardMarkup([[
-                    InlineKeyboardButton("📜 Pirate Log", callback_data="about"),
-                    InlineKeyboardButton("🗺️ Close Map", callback_data="close")
-                ]]),
-                protect_content=PROTECT_CONTENT
-            )
-            await asyncio.sleep(1)
+            for msg in messages:
+                await msg.copy(
+                    chat_id=message.chat.id,
+                    caption=CUSTOM_CAPTION,
+                    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("📜 Pirate Log", callback_data="about"), InlineKeyboardButton("🗺️ Close Map", callback_data="close")]]),
+                    protect_content=PROTECT_CONTENT
+                )
+                await asyncio.sleep(1)
 
-        # Auto delete if enabled
-        if AUTO_DELETE_MSG:
-            await asyncio.sleep(AUTO_DELETE_TIME)
-            await message.delete()
-
-        return
-
+            if AUTO_DELETE_MSG:
+                await asyncio.sleep(AUTO_DELETE_TIME)
+                await message.delete()
+            return
     except (IndexError, ValueError, Exception) as e:
         await reply_with_clean(message, f"⚠️ Invalid or broken link.\n\n<code>{e}</code>")
-    
-        # Night Mode
         if datetime.now().hour >= 22 or datetime.now().hour < 6:
             reply = await message.reply("🌙 Ara Ara~ It's sleepy hours, but LUFFY's still awake! 🛌👒")
             await asyncio.sleep(AUTO_DELETE_TIME)
@@ -277,8 +241,6 @@ async def start_handler(client: Client, message: Message):
             await message.delete()
         return
 
-    # Normal start without payload
-    # Boot sequence
     try:
         progress = await message.reply("👒 Booting LUFFY File Core...")
         for step in random.choice(boot_sequences):
@@ -289,14 +251,9 @@ async def start_handler(client: Client, message: Message):
     except Exception as e:
         print(f"[⚠️ Boot Animation Error] {e}")
 
-    # Main menu
     reply_markup = InlineKeyboardMarkup([
-        [
-            InlineKeyboardButton("📜 Pirate Log", callback_data="about"),
-            InlineKeyboardButton("🗺️ Close Map", callback_data="close")
-        ]
+        [InlineKeyboardButton("📜 Pirate Log", callback_data="about"), InlineKeyboardButton("🗺️ Close Map", callback_data="close")]
     ])
-
 
     if START_PIC:
         reply = await message.reply_photo(
@@ -313,7 +270,7 @@ async def start_handler(client: Client, message: Message):
         )
         await auto_delete(reply, message)
     else:
-        await message.reply_text(
+        reply = await message.reply_text(
             text=START_MSG.format(
                 first=message.from_user.first_name,
                 last=message.from_user.last_name,
@@ -325,3 +282,4 @@ async def start_handler(client: Client, message: Message):
             disable_web_page_preview=True,
             quote=True
         )
+        await auto_delete(reply, message)
