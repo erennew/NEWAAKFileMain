@@ -20,7 +20,7 @@ from config import (
     USER_REQUESTS, TIME_WINDOW, FLOOD_MAX_REQUESTS,
     FLOOD_TIME_WINDOW
 )
-
+from config import DB_CHANNEL
 # ===== GLOBAL RATE LIMIT TRACKING ===== #
 request_timestamps = deque()
 user_request_timestamps = {}
