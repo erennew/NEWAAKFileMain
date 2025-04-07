@@ -64,23 +64,28 @@ class Bot(Client):
             "last_warn": 0
         }
 
-    async def check_flood(self, user_id: int) -> Tuple[bool, int]:
-        now = time.time()
-        user_data = self.user_rate_limit[user_id]
-        user_data["timestamps"] = [
-            t for t in user_data["timestamps"]
-            if now - t < FLOOD_TIME_WINDOW
-        ]
-        request_count = len(user_data["timestamps"])
-        if request_count >= FLOOD_MAX_REQUESTS * 2:
-            user_data["warn_level"] = 2
-            return True, 2
-        elif request_count >= FLOOD_MAX_REQUESTS:
-            user_data["warn_level"] = 1
-            return True, 1
+async def check_flood(self, user_id: int) -> Tuple[bool, int]:
+    now = time.time()
+    user_data = self.user_rate_limit[user_id]
+    user_data["timestamps"] = [
+        t for t in user_data["timestamps"]
+        if now - t < FLOOD_TIME_WINDOW
+    ]
+    request_count = len(user_data["timestamps"])
+    
+    if request_count >= FLOOD_MAX_REQUESTS * 2:
+        user_data["warn_level"] = 2
+        wait = await dynamic_cooldown()
+        await asyncio.sleep(wait)
+        return True, 2
+    elif request_count >= FLOOD_MAX_REQUESTS:
+        user_data["warn_level"] = 1
+        wait = await dynamic_cooldown()
+        await asyncio.sleep(wait)
+        return True, 1
 
-        user_data["timestamps"].append(now)
-        return False, 0
+    user_data["timestamps"].append(now)
+    return False, 0
 
     async def _reset_flood_counts(self):
         while True:
