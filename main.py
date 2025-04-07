@@ -1,16 +1,17 @@
 import asyncio
 from pyrogram import idle
-from bot import Bot  # This is your bot class
+from bot import Bot
 from plugins.web_server import web_server
 
-bot = Bot()  # ✅ Instantiate your Bot class
+bot = Bot()  # Instantiate the bot
 
-async def main():
-    await web_server()   # Start the aiohttp web server for health checks
-    await bot.start()    # Start the Telegram bot
-    print("✅ Luffy Bot is up and running! 🏴‍☠️")
-    await idle()         # Keep the bot alive
-    await bot.stop()     # Gracefully shut down when exiting
+async def start_bot():
+    await web_server()           # Start the aiohttp web server
+    await bot.start()            # Start the bot (uses Pyrogram's event loop)
+    print("✅ Luffy Bot is online!")
+    await idle()                 # Keep bot running until manually stopped
+    await bot.stop()             # Stop gracefully on shutdown
 
-if __name__ == "__main__":
-    asyncio.run(main())
+# DO NOT USE asyncio.run() here; use the loop already in use
+loop = asyncio.get_event_loop()
+loop.run_until_complete(start_bot())
