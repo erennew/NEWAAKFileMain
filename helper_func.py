@@ -6,7 +6,9 @@ import logging
 import time
 from collections import deque
 from typing import List, Optional, Tuple
-
+from collections import defaultdict
+from datetime import datetime, timedelta
+from config import FLOOD_MAX_REQUESTS, FLOOD_TIME_WINDOW, GLOBAL_REQUESTS, GLOBAL_TIME_WINDOW
 from pyrogram import filters
 from pyrogram.enums import ChatMemberStatus
 from pyrogram.errors import FloodWait, UserNotParticipant
