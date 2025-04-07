@@ -18,6 +18,24 @@ from config import (
     FLOOD_MAX_REQUESTS, FLOOD_TIME_WINDOW, FLOOD_COOLDOWN
 )
 from plugins import web_server
+import psutil
+
+# Global task tracker
+active_tasks = set()
+
+async def dynamic_cooldown() -> float:
+    """
+    Adjust cooldown duration based on server load and active tasks.
+    """
+    load = psutil.cpu_percent(interval=1)
+    base = 1.0
+
+    if load > 70:
+        base *= 1.5  # High CPU load
+    if len(active_tasks) > 50:
+        base *= 2  # High async task load
+
+    return base
 
 class Bot(Client):
     def __init__(self):
