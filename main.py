@@ -1,26 +1,49 @@
+# (©) WeekendsBotz
 import asyncio
-from bot import bot  # Import the Bot instance
-from aiohttp import web
+import logging
+import sys
+from Stardust_4k.bot import bot
 
-# Tiny web server for Koyeb health check
-async def healthcheck(request):
-    return web.Response(text="✅ Luffy bot alive!")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
 
-async def run_webserver():
-    app = web.Application()
-    app.router.add_get("/", healthcheck)
-    runner = web.AppRunner(app)
-    await runner.setup()
-    site = web.TCPSite(runner, "0.0.0.0", 8000)  # Koyeb requires port 8000
-    await site.start()
+LOGGER = logging.getLogger(__name__)
 
-# Main async entry point
 async def main():
-    await asyncio.gather(
-        bot.start(),
-        run_webserver()
-    )
+    try:
+        await bot.start()
+        LOGGER.info("💫 Bot started successfully. Awaiting tasks...")
 
-# Run the bot + web server
+        await idle()  # Keeps the bot running
+    except (KeyboardInterrupt, SystemExit):
+        LOGGER.warning("🧨 Interrupted! Shutting down...")
+    finally:
+        await bot.stop()
+        LOGGER.info("✅ Bot stopped. See ya, captain!")
+
+def idle():
+    """Idle loop to keep bot running."""
+    loop = asyncio.get_event_loop()
+    stop = loop.create_future()
+
+    def shutdown():
+        if not stop.done():
+            stop.set_result(None)
+
+    for signal_name in ('SIGINT', 'SIGTERM'):
+        try:
+            loop.add_signal_handler(getattr(signal, signal_name), shutdown)
+        except (AttributeError, NotImplementedError):
+            # Windows compatibility fallback
+            pass
+
+    return stop
+
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except Exception as e:
+        LOGGER.critical(f"🔥 Fatal Error: {e}", exc_info=True)
