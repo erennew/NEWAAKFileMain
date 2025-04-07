@@ -1,19 +1,26 @@
-from bot import Bot
 import asyncio
-import logging
+from bot import bot  # Import the Bot instance
+from aiohttp import web
 
-logging.basicConfig(level=logging.INFO)
+# Tiny web server for Koyeb health check
+async def healthcheck(request):
+    return web.Response(text="✅ Luffy bot alive!")
 
+async def run_webserver():
+    app = web.Application()
+    app.router.add_get("/", healthcheck)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, "0.0.0.0", 8000)  # Koyeb requires port 8000
+    await site.start()
+
+# Main async entry point
 async def main():
-    bot = Bot()
-    await bot.start()
-    await idle()  # Keeps the bot alive
-    await bot.stop()
+    await asyncio.gather(
+        bot.start(),
+        run_webserver()
+    )
 
-from pyrogram import idle
-
+# Run the bot + web server
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        print("Bot stopped manually.")
+    asyncio.run(main())
