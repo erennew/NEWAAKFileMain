@@ -131,7 +131,8 @@ async def reply_with_clean(message, text, **kwargs):
 @Bot.on_message(filters.command("start") & filters.private)
 async def start_handler(client: Client, message: Message):
     user_id = message.from_user.id
-
+    
+    # First check if user is subscribed
     if not await subscribed(client, message):
         invite_links = await create_invite_links(client)
         buttons = []
@@ -201,6 +202,46 @@ async def start_handler(client: Client, message: Message):
     if not await present_user(user_id):
         await add_user(user_id)
 
+    # Check for payload in start command
+    try:
+        payload = message.command[1]
+        if payload:
+            # Decode and get file
+            file_id = await decode(payload)
+            messages = await get_messages(file_id)
+            
+            # Boot sequence before sending files
+            try:
+                progress = await message.reply("👒 Booting LUFFY File Core...")
+                for step in random.choice(boot_sequences):
+                    await asyncio.sleep(random.uniform(0.5, 1.2))
+                    await progress.edit(step)
+                await asyncio.sleep(0.5)
+                await progress.delete()
+            except Exception as e:
+                print(f"Boot animation error: {e}")
+
+            # Send files
+            for msg in messages:
+                await msg.copy(
+                    chat_id=message.chat.id,
+                    caption=CUSTOM_CAPTION,
+                    reply_markup=InlineKeyboardMarkup([[
+                        InlineKeyboardButton("📜 Pirate Log", callback_data="about"),
+                        InlineKeyboardButton("🗺️ Close Map", callback_data="close")
+                    ]]),
+                    protect_content=PROTECT_CONTENT
+                )
+                await asyncio.sleep(1)
+            
+            # Auto delete if enabled
+            if AUTO_DELETE_MSG:
+                await asyncio.sleep(AUTO_DELETE_TIME)
+                await message.delete()
+            return
+    except IndexError:
+        pass  # No payload, continue to normal start
+
     # Night Mode
     if datetime.now().hour >= 22 or datetime.now().hour < 6:
         reply = await message.reply("🌙 Ara Ara~ It's sleepy hours, but LUFFY's still awake! 🛌👒")
@@ -209,6 +250,7 @@ async def start_handler(client: Client, message: Message):
         await message.delete()
         return
 
+    # Normal start without payload
     # Boot sequence
     try:
         progress = await message.reply("👒 Booting LUFFY File Core...")
