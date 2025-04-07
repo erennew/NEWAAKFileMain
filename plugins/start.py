@@ -4,6 +4,7 @@ import asyncio
 import random
 import contextlib
 from datetime import datetime
+from helper_func import check_flood
 from pyrogram import Client, filters
 from pyrogram.enums import ParseMode
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, ChatPermissions
