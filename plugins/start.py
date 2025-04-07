@@ -266,15 +266,15 @@ async def start_handler(client: Client, message: Message):
 
         return
 
-except (IndexError, ValueError, Exception) as e:
-    await reply_with_clean(message, f"⚠️ Invalid or broken link.\n\n<code>{e}</code>")
-
-    # Night Mode
-    if datetime.now().hour >= 22 or datetime.now().hour < 6:
-        reply = await message.reply("🌙 Ara Ara~ It's sleepy hours, but LUFFY's still awake! 🛌👒")
-        await asyncio.sleep(AUTO_DELETE_TIME)
-        await reply.delete()
-        await message.delete()
+    except (IndexError, ValueError, Exception) as e:
+        await reply_with_clean(message, f"⚠️ Invalid or broken link.\n\n<code>{e}</code>")
+    
+        # Night Mode
+        if datetime.now().hour >= 22 or datetime.now().hour < 6:
+            reply = await message.reply("🌙 Ara Ara~ It's sleepy hours, but LUFFY's still awake! 🛌👒")
+            await asyncio.sleep(AUTO_DELETE_TIME)
+            await reply.delete()
+            await message.delete()
         return
 
     # Normal start without payload
@@ -287,13 +287,16 @@ except (IndexError, ValueError, Exception) as e:
         await asyncio.sleep(0.5)
         await progress.delete()
     except Exception as e:
-        print(f"Boot animation error: {e}")
+        print(f"[⚠️ Boot Animation Error] {e}")
 
     # Main menu
     reply_markup = InlineKeyboardMarkup([
-        [InlineKeyboardButton("📜 Pirate Log", callback_data="about"),
-         InlineKeyboardButton("🗺️ Close Map", callback_data="close")]
+        [
+            InlineKeyboardButton("📜 Pirate Log", callback_data="about"),
+            InlineKeyboardButton("🗺️ Close Map", callback_data="close")
+        ]
     ])
+
 
     if START_PIC:
         reply = await message.reply_photo(
