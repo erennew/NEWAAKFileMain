@@ -18,7 +18,7 @@ from config import (
 )
 from helper_func import subscribed, decode, get_messages, delete_file, is_user_limited
 from database.database import add_user, present_user
-
+from config import DB_CHANNEL
 PICS = os.environ.get("PICS", "").split() or [
     "https://i.ibb.co/Kx5mS6V5/x.jpg",
     "https://i.ibb.co/jZQHRzKv/x.jpg",
