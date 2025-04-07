@@ -14,7 +14,7 @@ from config import (
     API_HASH, APP_ID, LOGGER, TG_BOT_TOKEN, TG_BOT_WORKERS,
     FORCE_SUB_CHANNEL_1, FORCE_SUB_CHANNEL_2,
     FORCE_SUB_CHANNEL_3, FORCE_SUB_CHANNEL_4,
-    DB_CHANNEL, PORT,  # 👈 updated from CHANNEL_ID to DB_CHANNEL
+    DB_CHANNEL, PORT,
     FLOOD_MAX_REQUESTS, FLOOD_TIME_WINDOW, FLOOD_COOLDOWN
 )
 from plugins import web_server
@@ -64,28 +64,28 @@ class Bot(Client):
             "last_warn": 0
         }
 
-async def check_flood(self, user_id: int) -> Tuple[bool, int]:
-    now = time.time()
-    user_data = self.user_rate_limit[user_id]
-    user_data["timestamps"] = [
-        t for t in user_data["timestamps"]
-        if now - t < FLOOD_TIME_WINDOW
-    ]
-    request_count = len(user_data["timestamps"])
-    
-    if request_count >= FLOOD_MAX_REQUESTS * 2:
-        user_data["warn_level"] = 2
-        wait = await dynamic_cooldown()
-        await asyncio.sleep(wait)
-        return True, 2
-    elif request_count >= FLOOD_MAX_REQUESTS:
-        user_data["warn_level"] = 1
-        wait = await dynamic_cooldown()
-        await asyncio.sleep(wait)
-        return True, 1
+    async def check_flood(self, user_id: int) -> Tuple[bool, int]:
+        now = time.time()
+        user_data = self.user_rate_limit[user_id]
+        user_data["timestamps"] = [
+            t for t in user_data["timestamps"]
+            if now - t < FLOOD_TIME_WINDOW
+        ]
+        request_count = len(user_data["timestamps"])
 
-    user_data["timestamps"].append(now)
-    return False, 0
+        if request_count >= FLOOD_MAX_REQUESTS * 2:
+            user_data["warn_level"] = 2
+            wait = await dynamic_cooldown()
+            await asyncio.sleep(wait)
+            return True, 2
+        elif request_count >= FLOOD_MAX_REQUESTS:
+            user_data["warn_level"] = 1
+            wait = await dynamic_cooldown()
+            await asyncio.sleep(wait)
+            return True, 1
+
+        user_data["timestamps"].append(now)
+        return False, 0
 
     async def _reset_flood_counts(self):
         while True:
@@ -120,8 +120,8 @@ async def check_flood(self, user_id: int) -> Tuple[bool, int]:
 
     async def _verify_db_channel(self):
         try:
-            self.db_channel = await self.get_chat(DB_CHANNEL)  # ✅ updated
-            test_msg = await self.send_message(DB_CHANNEL, "🔧 Connection test")  # ✅ updated
+            self.db_channel = await self.get_chat(DB_CHANNEL)
+            test_msg = await self.send_message(DB_CHANNEL, "🔧 Connection test")
             await test_msg.delete()
         except Exception as e:
             self.log(__name__).error(f"❌ DB channel verification failed: {e}")
@@ -147,7 +147,7 @@ async def check_flood(self, user_id: int) -> Tuple[bool, int]:
             self.uptime = datetime.now()
             self.log(__name__).info(f"🤖 Bot @{self.username} authenticated")
 
-            await self._verify_db_channel()       # ✅ correct order
+            await self._verify_db_channel()
             await self._setup_force_sub_channels()
 
             asyncio.create_task(self._reset_flood_counts())
@@ -177,5 +177,5 @@ async def check_flood(self, user_id: int) -> Tuple[bool, int]:
 
 # Global variables
 START_TIME = time.time()
-bot = Bot()  # ✅ Required for main.py to work
+bot = Bot()
 __all__ = ["Bot", "bot", "START_TIME"]
