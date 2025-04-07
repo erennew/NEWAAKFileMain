@@ -198,11 +198,11 @@ async def start_handler(client: Client, message: Message):
         await message.delete()
         return
 
-    # Main menu
+    # Main menu - CORRECTED SECTION
     reply_markup = InlineKeyboardMarkup([
         [InlineKeyboardButton("📜 Pirate Log", callback_data="about"),
-         InlineKeyboardButton("🗺️ Close Map", callback_data="close")
-    ])
+         InlineKeyboardButton("🗺️ Close Map", callback_data="close")]
+    ])  # This closing bracket now matches the opening one
 
     if START_PIC:
         await message.reply_photo(
