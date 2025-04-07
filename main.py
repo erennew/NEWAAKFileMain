@@ -2,7 +2,7 @@
 import asyncio
 import logging
 import sys
-from Stardust_4k.bot import bot
+from bot import Bot
 
 logging.basicConfig(
     level=logging.INFO,
