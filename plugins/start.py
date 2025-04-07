@@ -97,6 +97,7 @@ async def start_handler(client: Client, message: Message):
                 user_id=user_id,
                 until_date=until,
                 permissions=ChatPermissions(can_send_messages=False)
+            )
         return await reply_with_clean(message, "\n".join(warning))
 
     # Check subscription
@@ -114,7 +115,8 @@ async def start_handler(client: Client, message: Message):
                 payload = message.command[1]
                 buttons.append([InlineKeyboardButton(
                     text='• ɴᴏᴡ ᴄʟɪᴄᴋ ʜᴇʀᴇ •',
-                    url=f"https://t.me/{client.username}?start={payload}")])
+                    url=f"https://t.me/{client.username}?start={payload}"
+                )])
         except IndexError:
             pass
 
@@ -126,9 +128,11 @@ async def start_handler(client: Client, message: Message):
                     last=message.from_user.last_name,
                     username=f"@{message.from_user.username}" if message.from_user.username else None,
                     mention=message.from_user.mention,
-                    id=message.from_user.id),
+                    id=message.from_user.id
+                ),
                 reply_markup=InlineKeyboardMarkup(buttons),
-                quote=True)
+                quote=True
+            )
         else:
             return await message.reply(
                 text=FORCE_MSG.format(
@@ -136,9 +140,11 @@ async def start_handler(client: Client, message: Message):
                     last=message.from_user.last_name,
                     username=f"@{message.from_user.username}" if message.from_user.username else None,
                     mention=message.from_user.mention,
-                    id=message.from_user.id),
+                    id=message.from_user.id
+                ),
                 reply_markup=InlineKeyboardMarkup(buttons),
-                quote=True)
+                quote=True
+            )
 
     # Handle payload if exists
     try:
@@ -164,8 +170,10 @@ async def start_handler(client: Client, message: Message):
                     caption=CUSTOM_CAPTION,
                     reply_markup=InlineKeyboardMarkup([[
                         InlineKeyboardButton("📜 Pirate Log", callback_data="about"),
-                        InlineKeyboardButton("🗺️ Close Map", callback_data="close")]]),
-                    protect_content=PROTECT_CONTENT)
+                        InlineKeyboardButton("🗺️ Close Map", callback_data="close")
+                    ]]),
+                    protect_content=PROTECT_CONTENT
+                )
                 await asyncio.sleep(1)
             
             if AUTO_DELETE_MSG:
@@ -193,7 +201,8 @@ async def start_handler(client: Client, message: Message):
     # Main menu
     reply_markup = InlineKeyboardMarkup([
         [InlineKeyboardButton("📜 Pirate Log", callback_data="about"),
-         InlineKeyboardButton("🗺️ Close Map", callback_data="close")]])
+         InlineKeyboardButton("🗺️ Close Map", callback_data="close")
+    ])
 
     if START_PIC:
         await message.reply_photo(
@@ -203,9 +212,11 @@ async def start_handler(client: Client, message: Message):
                 last=message.from_user.last_name,
                 username=f"@{message.from_user.username}" if message.from_user.username else None,
                 mention=message.from_user.mention,
-                id=message.from_user.id),
+                id=message.from_user.id
+            ),
             reply_markup=reply_markup,
-            quote=True)
+            quote=True
+        )
     else:
         await message.reply_text(
             text=START_MSG.format(
@@ -213,7 +224,9 @@ async def start_handler(client: Client, message: Message):
                 last=message.from_user.last_name,
                 username=f"@{message.from_user.username}" if message.from_user.username else None,
                 mention=message.from_user.mention,
-                id=message.from_user.id),
+                id=message.from_user.id
+            ),
             reply_markup=reply_markup,
             disable_web_page_preview=True,
-            quote=True)
+            quote=True
+        )
