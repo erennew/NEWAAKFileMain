@@ -16,5 +16,5 @@ dnspython
 aiohttp
 asyncio
 
-# --- For-System-Stats ------- #
+# --- For-System-Stats ------ #
 psutil
