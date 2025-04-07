@@ -7,23 +7,23 @@ from logging.handlers import RotatingFileHandler
 load_dotenv()
 
 # ===== Bot Configuration ===== #
-TG_BOT_TOKEN = os.environ.get("TG_BOT_TOKEN", "")
-APP_ID = int(os.environ.get("APP_ID", 12345))
-API_HASH = os.environ.get("API_HASH", "")
-OWNER_ID = int(os.environ.get("OWNER_ID", 123456789))
+TG_BOT_TOKEN = os.environ.get("TG_BOT_TOKEN", "7988129609:AAHIJGSZm2-Ryso22AR4X5s05ZF-HaMmfuc")
+APP_ID = int(os.environ.get("APP_ID", 24500584))
+API_HASH = os.environ.get("API_HASH", "449da69cf4081dc2cc74eea828d0c490")
+OWNER_ID = int(os.environ.get("OWNER_ID", 1047253913))
 
 # ===== Database Configuration ===== #
-DB_CHANNEL = int(os.environ.get("DB_CHANNEL", 0))
-DB_URI = os.environ.get("DATABASE_URL", "")
-DB_NAME = os.environ.get("DATABASE_NAME", "RaviBotsDB")
+DB_CHANNEL = int(os.environ.get("DB_CHANNEL", -1002448203068))
+DB_URI = os.environ.get("DATABASE_URL", "mongodb+srv://chattaravikiran2001:6nJQC6pb3wLf1zCu@cluster1.daxfzgr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster1")
+DB_NAME = os.environ.get("DATABASE_NAME", "Cluster1")
 
 # ===== Force Subscription Settings ===== #
-JOIN_REQUEST_ENABLE = os.environ.get("JOIN_REQUEST_ENABLED", "False").lower() == "true"
+JOIN_REQUEST_ENABLE = os.environ.get("JOIN_REQUEST_ENABLED", "False").lower() == "True"
 
-FORCE_SUB_CHANNEL_1 = int(os.environ.get("FORCE_SUB_CHANNEL_1", 0))
-FORCE_SUB_CHANNEL_2 = int(os.environ.get("FORCE_SUB_CHANNEL_2", 0))
-FORCE_SUB_CHANNEL_3 = int(os.environ.get("FORCE_SUB_CHANNEL_3", 0))
-FORCE_SUB_CHANNEL_4 = int(os.environ.get("FORCE_SUB_CHANNEL_4", 0))
+FORCE_SUB_CHANNEL_1 = int(os.environ.get("FORCE_SUB_CHANNEL_1", -1002650862527))
+FORCE_SUB_CHANNEL_2 = int(os.environ.get("FORCE_SUB_CHANNEL_2", -1002331321194))
+FORCE_SUB_CHANNEL_3 = int(os.environ.get("FORCE_SUB_CHANNEL_3", -1001956677010))
+FORCE_SUB_CHANNEL_4 = int(os.environ.get("FORCE_SUB_CHANNEL_4", -1002244170363))
 
 # ===== Bot Performance Settings ===== #
 TG_BOT_WORKERS = int(os.environ.get("TG_BOT_WORKERS", 4))
