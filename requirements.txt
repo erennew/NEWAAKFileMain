@@ -12,3 +12,6 @@ aiohttp
 asyncio
 # --- For-System-Stats ------- #
 psutil
+pyrogram>=2.0.0
+fastapi>=0.95.0
+uvicorn>=0.21.0
