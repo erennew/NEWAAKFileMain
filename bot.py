@@ -14,7 +14,7 @@ from config import (
     API_HASH, APP_ID, LOGGER, TG_BOT_TOKEN, TG_BOT_WORKERS,
     FORCE_SUB_CHANNEL_1, FORCE_SUB_CHANNEL_2,
     FORCE_SUB_CHANNEL_3, FORCE_SUB_CHANNEL_4,
-    CHANNEL_ID, PORT,
+    DB_CHANNEL, PORT,  # 👈 updated from CHANNEL_ID to DB_CHANNEL
     FLOOD_MAX_REQUESTS, FLOOD_TIME_WINDOW, FLOOD_COOLDOWN
 )
 from plugins import web_server
@@ -97,8 +97,8 @@ class Bot(Client):
 
     async def _verify_db_channel(self):
         try:
-            self.db_channel = await self.get_chat(CHANNEL_ID)
-            test_msg = await self.send_message(CHANNEL_ID, "🔧 Connection test")
+            self.db_channel = await self.get_chat(DB_CHANNEL)  # ✅ updated
+            test_msg = await self.send_message(DB_CHANNEL, "🔧 Connection test")  # ✅ updated
             await test_msg.delete()
         except Exception as e:
             self.log(__name__).error(f"❌ DB channel verification failed: {e}")
@@ -124,7 +124,7 @@ class Bot(Client):
             self.uptime = datetime.now()
             self.log(__name__).info(f"🤖 Bot @{self.username} authenticated")
 
-            await self._verify_db_channel()
+            await self._verify_db_channel()       # ✅ correct order
             await self._setup_force_sub_channels()
 
             asyncio.create_task(self._reset_flood_counts())
@@ -150,6 +150,7 @@ class Bot(Client):
         self.log(__name__).info("🛑 Stopping bot gracefully...")
         await super().stop()
         self.log(__name__).info("👋 Bot stopped successfully")
+
 
 # Global variables
 START_TIME = time.time()
