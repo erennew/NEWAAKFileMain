@@ -127,15 +127,16 @@ class Bot(Client):
             self.log(__name__).error(f"❌ DB channel verification failed: {e}")
             raise
 
-    async def _start_web_server(self):
-        try:
-            app = web.AppRunner(web_server())  # ✅ No `await` here!
-            await app.setup()
-            await web.TCPSite(app, "0.0.0.0", PORT).start()
-            self.log(__name__).info(f"🌐 Web server running on port {PORT}")
-        except Exception as e:
-            self.log(__name__).error(f"❌ Web server failed: {e}")
-            raise
+async def _start_web_server(self):
+    try:
+        app_instance = await web_server()  # ✅ Await the coroutine
+        runner = web.AppRunner(app_instance)
+        await runner.setup()
+        await web.TCPSite(runner, "0.0.0.0", PORT).start()
+        self.log(__name__).info(f"🌐 Web server running on port {PORT}")
+    except Exception as e:
+        self.log(__name__).error(f"❌ Web server failed: {e}")
+        raise
 
 
     async def start(self, use_qr=False, except_ids=None):
