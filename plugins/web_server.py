@@ -1,8 +1,10 @@
 from aiohttp import web
 
+# Basic health check endpoint
 async def handle(request):
     return web.Response(text="Luffy Bot sailing smooth! 🏴‍☠️")
 
+# Function to launch the web server
 async def web_server():
     app = web.Application()
     app.router.add_get("/", handle)
