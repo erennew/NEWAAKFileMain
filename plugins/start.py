@@ -208,7 +208,7 @@ async def start_handler(client: Client, message: Message):
         if payload:
             # Decode and get file
             file_id = await decode(payload)
-            messages = await client.get_messages(DB_CHANNEL, ids)
+            messages = await client.get_messages(DB_CHANNEL, file_ids)
             
             # Boot sequence before sending files
             try:
