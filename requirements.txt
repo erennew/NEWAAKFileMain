@@ -1,6 +1,8 @@
 https://codeload.github.com/KurimuzonAkuma/pyrogram/zip/refs/heads/dev
 # --- For-Bot-Working --------- #
-pyrogram>=2.0.0,<3.0.0
+pyrogram>=2.0.0
+fastapi>=0.95.0
+uvicorn>=0.21.0
 TgCrypto
 pyromod==1.5
 python-dotenv
@@ -12,6 +14,4 @@ aiohttp
 asyncio
 # --- For-System-Stats ------- #
 psutil
-pyrogram>=2.0.0
-fastapi>=0.95.0
-uvicorn>=0.21.0
+
