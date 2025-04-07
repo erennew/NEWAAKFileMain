@@ -133,5 +133,5 @@ if not TG_BOT_TOKEN:
 if not all([APP_ID, API_HASH]):
     raise ValueError("APP_ID and API_HASH environment variables are required!")
 
-if not CHANNEL_ID:
-    raise ValueError("CHANNEL_ID environment variable is required!")
+if not DB_CHANNEL:
+    raise ValueError("DB_CHANNEL environment variable is required!")
