@@ -1,13 +1,19 @@
-# main.py
-
+from bot import Bot
 import asyncio
-from pyrogram import idle
-from bot import bot  # Import the already-created bot instance
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 async def main():
-    await bot.start()   # Start your bot (async)
-    await idle()        # Keep the bot running (like run() in sync)
-    await bot.stop()    # Optional: graceful shutdown when stopped
+    bot = Bot()
+    await bot.start()
+    await idle()  # Keeps the bot alive
+    await bot.stop()
+
+from pyrogram import idle
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("Bot stopped manually.")
