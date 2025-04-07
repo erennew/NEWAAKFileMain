@@ -1,16 +1,13 @@
-import asyncio
-from bot import bot  # Reusing the instance created in bot.py
-import logging
+# main.py
 
-logging.basicConfig(level=logging.INFO)
+import asyncio
+from pyrogram import idle
+from bot import bot  # Import the already-created bot instance
 
 async def main():
-    try:
-        await bot.start()     # Starts the bot (uses Pyrogram's async flow)
-        await idle()          # Keeps the bot running (until a signal like SIGTERM)
-    finally:
-        await bot.stop()
+    await bot.start()   # Start your bot (async)
+    await idle()        # Keep the bot running (like run() in sync)
+    await bot.stop()    # Optional: graceful shutdown when stopped
 
 if __name__ == "__main__":
-    from pyrogram import idle
     asyncio.run(main())
