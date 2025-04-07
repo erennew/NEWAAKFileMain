@@ -1,49 +1,61 @@
-# (©) WeekendsBotz
 import asyncio
-import logging
-import sys
-from bot import Bot
+from pyrogram import Client
+from fastapi import FastAPI
+import uvicorn
+import os
+import signal
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout)]
-)
+# FastAPI health check app
+app = FastAPI()
 
-LOGGER = logging.getLogger(__name__)
+@app.get("/health")
+def health_check():
+    return {"status": "alive"}
+
+class BotWrapper:
+    def __init__(self):
+        self.bot = Client(
+            "luffy_bot",
+            api_id=os.getenv("API_ID"),
+            api_hash=os.getenv("API_HASH"),
+            bot_token=os.getenv("BOT_TOKEN"),
+            in_memory=True
+        )
+        self.running_event = asyncio.Event()
+
+    async def start(self):
+        await self.bot.start()
+        print("🏴‍☠️ Luffy bot sailing the Grand Line!")
+        await self.running_event.wait()
+
+    async def stop(self):
+        print("⚓ Stopping the bot...")
+        self.running_event.set()
+        await self.bot.stop()
+
+async def run_server():
+    config = uvicorn.Config(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
+    server = uvicorn.Server(config)
+    await server.serve()
 
 async def main():
-    try:
-        await bot.start()
-        LOGGER.info("💫 Bot started successfully. Awaiting tasks...")
+    bot_wrapper = BotWrapper()
 
-        await idle()  # Keeps the bot running
-    except (KeyboardInterrupt, SystemExit):
-        LOGGER.warning("🧨 Interrupted! Shutting down...")
-    finally:
-        await bot.stop()
-        LOGGER.info("✅ Bot stopped. See ya, captain!")
+    async def shutdown_handler():
+        await bot_wrapper.stop()
 
-def idle():
-    """Idle loop to keep bot running."""
-    loop = asyncio.get_event_loop()
-    stop = loop.create_future()
+    # Graceful shutdown on SIGTERM/SIGINT
+    loop = asyncio.get_running_loop()
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        loop.add_signal_handler(sig, lambda: asyncio.create_task(shutdown_handler()))
 
-    def shutdown():
-        if not stop.done():
-            stop.set_result(None)
-
-    for signal_name in ('SIGINT', 'SIGTERM'):
-        try:
-            loop.add_signal_handler(getattr(signal, signal_name), shutdown)
-        except (AttributeError, NotImplementedError):
-            # Windows compatibility fallback
-            pass
-
-    return stop
+    await asyncio.gather(
+        bot_wrapper.start(),
+        run_server()
+    )
 
 if __name__ == "__main__":
     try:
         asyncio.run(main())
-    except Exception as e:
-        LOGGER.critical(f"🔥 Fatal Error: {e}", exc_info=True)
+    except KeyboardInterrupt:
+        print("👋 Received goodbye signal.")
