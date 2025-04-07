@@ -46,17 +46,61 @@ async def check_flood(user_id: int) -> tuple:
     return False, 0
 
 boot_sequences = [
-    ["⚡ <b>Gear Second: Activated!</b>", "💨 <i>Blood pumping... Systems accelerating!</i>", "✅ <b>READY TO SERVE AT JET SPEED!</b> 🏴‍☠️"],
-    ["⚓ <b>THOUSAND SUNNY DEPLOYED</b>", "🌊 <i>Sailing through the Grand Line...</i>", "🧭 <i>Navigation systems: ONLINE</i>", "✅ <b>ALL HANDS ON DECK!</b> ⛵"],
-    ["🌀 <b>DRUMS OF LIBERATION DETECTED!</b>", "🌟 <i>The Warrior of Liberation awakens...</i>", "🥁 <i>Boom-ba-boom-ba-boom...</i>", "✨ <i>Reality bending to your will!</i>", "✅ <b>GEAR 5: FULLY OPERATIONAL!</b> 🌈"],
-    ["🔧 <b>FRANKY'S SUPER STARTUP!</b>", "⚙️ <i>Cola energy at 9000%!</i>", "🤖 <i>Radar systems scanning...</i>", "🦾 <i>Robotic arms calibrating...</i>", "🚀 <i>Rockets primed for launch!</i>", "✅ <b>SUUUUUPER SYSTEMS READY!</b> 💥"],
-    ["🍰 <b>WHOLE CAKE BOOT SEQUENCE!</b>", "🧁 <i>Preparing file buffet...</i>", "🍫 <i>Chocolate servers melting in...</i>", "🍮 <i>Sweet storage systems loaded</i>", "☕ <i>Tea bots standing by...</i>", "👑 <i>Big Mom approves this startup</i>", "✅ <b>YOUR FILES WILL BE DELICIOUS!</b> 🍩"]
+    [
+        "⚡ <b>Gear Second: Activated!</b>",
+        "💨 <i>Blood pumping... Systems accelerating!</i>",
+        "✅ <b>READY TO SERVE AT JET SPEED!</b> 🏴‍☠️"
+    ],
+    [
+        "⚓ <b>THOUSAND SUNNY DEPLOYED</b>",
+        "🌊 <i>Sailing through the Grand Line...</i>",
+        "🧭 <i>Navigation systems: ONLINE</i>",
+        "✅ <b>ALL HANDS ON DECK!</b> ⛵"
+    ],
+    [
+        "🌀 <b>DRUMS OF LIBERATION DETECTED!</b>",
+        "🌟 <i>The Warrior of Liberation awakens...</i>",
+        "🥁 <i>Boom-ba-boom-ba-boom...</i>",
+        "✨ <i>Reality bending to your will!</i>",
+        "✅ <b>GEAR 5: FULLY OPERATIONAL!</b> 🌈"
+    ],
+    [
+        "🔧 <b>FRANKY'S SUPER STARTUP!</b>",
+        "⚙️ <i>Cola energy at 9000%!</i>",
+        "🤖 <i>Radar systems scanning...</i>",
+        "🦾 <i>Robotic arms calibrating...</i>",
+        "🚀 <i>Rockets primed for launch!</i>",
+        "✅ <b>SUUUUUPER SYSTEMS READY!</b> 💥"
+    ],
+    [
+        "🍰 <b>WHOLE CAKE BOOT SEQUENCE!</b>",
+        "🧁 <i>Preparing file buffet...</i>",
+        "🍫 <i>Chocolate servers melting in...</i>",
+        "🍮 <i>Sweet storage systems loaded</i>",
+        "☕ <i>Tea bots standing by...</i>",
+        "👑 <i>Big Mom approves this startup</i>",
+        "✅ <b>YOUR FILES WILL BE DELICIOUS!</b> 🍩"
+    ]
 ]
-
 FLOOD_SEQUENCES = [
-    ["🌊 <b>Woah there nakama!</b>", "<i>You're moving faster than Gear 2 Luffy!</i>", "⏳ Please wait 3 seconds between requests!"],
-    ["👑 <b>CONQUEROR'S HAKI DETECTED!</b>", "⚡ <i>Your spam shakes the server!</i>", "💢 Even Rayleigh would tell you to chill!", "🛑 5s cooldown activated..."],
-    ["☠️ <b>MARINE ADMIRAL INTERVENTION!</b>", "👮 <i>Akainu detected spam activity!</i>", "🔥 <i>Aokiji froze your requests!</i>", "⚡ <i>Kizaru says 'Too fast, yooo~'</i>", "⏲️ <b>10s TIMEOUT ENFORCED!</b> 🚫"]
+    [
+        "🌊 <b>Woah there nakama!</b>",
+        "<i>You're moving faster than Gear 2 Luffy!</i>", 
+        "⏳ Please wait 3 seconds between requests!"
+    ],
+    [
+        "👑 <b>CONQUEROR'S HAKI DETECTED!</b>",
+        "⚡ <i>Your spam shakes the server!</i>",
+        "💢 Even Rayleigh would tell you to chill!",
+        "🛑 5s cooldown activated..."
+    ],
+    [
+        "☠️ <b>MARINE ADMIRAL INTERVENTION!</b>",
+        "👮 <i>Akainu detected spam activity!</i>",
+        "🔥 <i>Aokiji froze your requests!</i>",
+        "⚡ <i>Kizaru says 'Too fast, yooo~'</i>",
+        "⏲️ <b>10s TIMEOUT ENFORCED!</b> 🚫"
+    ]
 ]
 
 async def create_invite_links(client: Client):
