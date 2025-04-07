@@ -13,7 +13,7 @@ API_HASH = os.environ.get("API_HASH", "")
 OWNER_ID = int(os.environ.get("OWNER_ID", 123456789))
 
 # ===== Database Configuration ===== #
-CHANNEL_ID = int(os.environ.get("CHANNEL_ID", 0))
+DB_CHANNEL = int(os.environ.get("DB_CHANNEL", 0))
 DB_URI = os.environ.get("DATABASE_URL", "")
 DB_NAME = os.environ.get("DATABASE_NAME", "RaviBotsDB")
 
