@@ -1,105 +1,100 @@
+import os
+import time
+import asyncio
+import platform
+import psutil
 from pyrogram import filters
 from pyrogram.types import Message, ChatAction
 from bot import Bot, START_TIME
-from config import ADMINS, USER_REPLY_TEXT, AUTO_DELETE_TIME
+from config import ADMINS, USER_REPLY_TEXT
 from database.database import full_userbase
-import asyncio
-import platform
-import time
-import psutil
 from helper_func import reply_with_clean, request_timestamps, GLOBAL_REQUESTS, TIME_WINDOW, USER_REQUESTS
 
+# Auto-delete configuration from environment
+AUTO_DELETE_TIME = int(os.getenv("AUTO_DELETE_TIME", 900))  # 15 minutes default
+AUTO_CLEAN = os.getenv("AUTO_CLEAN", "False").lower() == "true"
+DELETE_DELAY = int(os.getenv("DELETE_DELAY", 10))  # 10 seconds default
+
 def get_readable_time(seconds):
-    count = 0
-    time_list = []
-    time_suffix_list = ["s", "m", "h", "d"]
-
-    while count < 4 and seconds > 0:
-        seconds, result = divmod(seconds, 60 if count < 2 else 24)
-        time_list.append(f"{int(result)}{time_suffix_list[count]}")
-        count += 1
-
-    return " ".join(time_list[::-1])
+    """Convert seconds to human-readable pirate time"""
+    intervals = (
+        ('d', 86400),
+        ('h', 3600),
+        ('m', 60),
+        ('s', 1)
+    )
+    result = []
+    for name, count in intervals:
+        value = seconds // count
+        if value:
+            seconds -= value * count
+            result.append(f"{int(value)}{name}")
+    return " ".join(result) or "0s"
 
 @Bot.on_message(filters.command("stats") & filters.user(ADMINS))
 async def stats(client, message: Message):
-    # Calculate uptime in pirate style
-    uptime_seconds = time.time() - START_TIME
-    days, remainder = divmod(uptime_seconds, 86400)
-    hours, remainder = divmod(remainder, 3600)
-    minutes, seconds = divmod(remainder, 60)
+    """Pirate-themed system statistics command"""
+    # Show typing indicator
+    await client.send_chat_action(message.chat.id, ChatAction.TYPING)
     
-    # Get system metrics
+    # Calculate metrics
+    uptime = get_readable_time(time.time() - START_TIME)
+    total_users = len(await full_userbase())
     cpu = psutil.cpu_percent()
     mem = psutil.virtual_memory()
     disk = psutil.disk_usage('/')
+    platform_info = f"{platform.system()} {platform.release()}"
     
-    # Current rate limits
-    current_time = time.time()
-    global_count = len([ts for ts in request_timestamps if current_time - ts <= TIME_WINDOW])
-    user_count = len([
-        ts for ts in request_timestamps
-        if isinstance(ts, tuple) and ts[0] == message.from_user.id and current_time - ts[1] <= TIME_WINDOW
-    ])
-
-    # Pirate-themed stats message
-    text = (
-        f"<b>⚓ LUFFY BOT PIRATE REPORT ⚓</b>\n\n"
-        f"⏳ <b>Voyage Duration:</b>\n"
-        f"   - {int(days)} days\n"
-        f"   - {int(hours)} hours\n"
-        f"   - {int(minutes)} minutes\n"
-        f"   - {int(seconds)} seconds\n\n"
-        f"👥 <b>Crew Members:</b> <code>{len(await full_userbase())}</code>\n\n"
-        f"⚡ <b>System Status:</b>\n"
-        f"   - CPU: {cpu}% usage\n"
-        f"   - RAM: {mem.percent}% used ({mem.used//(1024**2)}MB/{mem.total//(1024**2)}MB)\n"
-        f"   - Storage: {disk.percent}% full\n\n"
+    # Build pirate report
+    report = (
+        f"<b>🏴‍☠️ LUFFY BOT PIRATE REPORT 🏴‍☠️</b>\n\n"
+        f"⏳ <b>Voyage Duration:</b> <code>{uptime}</code>\n"
+        f"👥 <b>Crew Members:</b> <code>{total_users}</code>\n"
+        f"🧭 <b>Navigation System:</b> <code>{platform_info}</code>\n\n"
+        f"⚡ <b>Ship Status:</b>\n"
+        f"  • CPU: <code>{cpu}%</code>\n"
+        f"  • RAM: <code>{mem.percent}%</code> ({mem.used//(1024**2)}MB/{mem.total//(1024**2)}MB)\n"
+        f"  • Storage: <code>{disk.percent}%</code>\n\n"
         f"🌊 <b>Current Limits:</b>\n"
-        f"   - Global: {global_count}/{GLOBAL_REQUESTS}\n"
-        f"   - Your: {user_count}/{USER_REQUESTS}\n\n"
-        f"<i>🏴‍☠️ The ship is sailing smoothly Captain!</i>"
+        f"  • Global: <code>{len(request_timestamps)}/{GLOBAL_REQUESTS}</code>\n"
+        f"  • Your: <code>{sum(1 for ts in request_timestamps if isinstance(ts, tuple) and ts[0] == message.from_user.id)}/{USER_REQUESTS}</code>"
     )
-    
-    # Show typing action for better UX
-    await client.send_chat_action(message.chat.id, ChatAction.TYPING)
-    await asyncio.sleep(1)  # Dramatic pause
-    
-    await reply_with_clean(message, text, parse_mode="HTML")
+
+    await reply_with_clean(message, report, parse_mode="HTML")
 
 @Bot.on_message(filters.command("ping") & filters.user(ADMINS))
 async def ping(client, message: Message):
+    """Animated ping command with pirate theme"""
     start = time.time()
     
-    # Pirate-themed ping animation
-    steps = [
-        "🏴‍☠️ Loading cola for cannon...",
+    # Ping animation sequence
+    animation = [
+        "🏴‍☠️ Loading cola cannons...",
         "⚡ Stretching rubber arms...",
         "🌊 Sending signal across Grand Line..."
     ]
     
-    msg = await message.reply_text(steps[0])
-    
-    for step in steps[1:]:
+    msg = await message.reply_text(animation[0])
+    for step in animation[1:]:
         await asyncio.sleep(0.7)
         await msg.edit_text(step)
     
+    # Calculate and show response
     ping_time = int((time.time() - start) * 1000)
-    
-    # Context-aware ping responses
-    if ping_time < 100:
-        response = f"⚡ <b>Gear Second Speed!</b> {ping_time}ms"
-    elif ping_time < 300:
-        response = f"⛵ <b>Smooth Sailing!</b> {ping_time}ms"
-    else:
-        response = f"🐌 <b>Sea King Lag!</b> {ping_time}ms"
+    response = (
+        f"⚡ <b>Gear Second Speed!</b> <code>{ping_time}ms</code>" if ping_time < 100 else
+        f"⛵ <b>Smooth Sailing!</b> <code>{ping_time}ms</code>" if ping_time < 300 else
+        f"🐌 <b>Sea King Lag!</b> <code>{ping_time}ms</code>"
+    )
     
     await msg.edit_text(response)
-    await asyncio.sleep(AUTO_DELETE_TIME)
-    await msg.delete()
-    await message.delete()
+    if AUTO_CLEAN:
+        await asyncio.sleep(DELETE_DELAY)
+        await msg.delete()
+        await message.delete()
 
 @Bot.on_message(filters.private & filters.incoming)
 async def useless(_, message: Message):
+    """Auto-reply to non-command messages"""
     if USER_REPLY_TEXT:
         await reply_with_clean(message, USER_REPLY_TEXT)
