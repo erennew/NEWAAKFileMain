@@ -4,7 +4,8 @@ import asyncio
 import platform
 import psutil
 from pyrogram import filters
-from pyrogram.types import Message, ChatAction
+from pyrogram.types import Message
+from pyrogram.enums import ChatAction  # ✅ NEW (works in v2.x)
 from bot import Bot, START_TIME
 from config import ADMINS, USER_REPLY_TEXT
 from database.database import full_userbase
