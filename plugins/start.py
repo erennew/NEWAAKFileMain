@@ -146,45 +146,95 @@ async def start_handler(client: Client, message: Message):
                 quote=True
             )
 
-    # Handle payload if exists
-    try:
-        if len(message.command) > 1:
-            payload = message.command[1]
-            file_id = await decode(payload)
-            messages = await get_messages(client, file_id)
+    # Handle file links
+    text = message.text
+    if len(text) > 7:
+        try:
+            base64_string = text.split(" ", 1)[1]
+            string = await decode(base64_string)
+            argument = string.split("-")
             
-            # Boot sequence
-            try:
-                progress = await message.reply("👒 Booting LUFFY File Core...")
-                for step in random.choice(boot_sequences):
-                    await asyncio.sleep(random.uniform(0.5, 1.2))
-                    await progress.edit(step)
-                await progress.delete()
-            except Exception as e:
-                print(f"Boot animation error: {e}")
-
-            # Send files
+            if len(argument) == 3:
+                start = int(int(argument[1]) / abs(DB_CHANNEL))
+                end = int(int(argument[2]) / abs(DB_CHANNEL))
+                ids = range(start, end + 1) if start <= end else list(range(start, end - 1, -1))
+            elif len(argument) == 2:
+                ids = [int(int(argument[1]) / abs(DB_CHANNEL))]
+            else:
+                return await message.reply("⚠️ Invalid file link format")
+                
+            temp_msg = await message.reply(f"<blockquote>⚡ Preparing your files...</blockquote>")
+            messages = await get_messages(client, ids)
+            await temp_msg.delete()
+            
+            track_msgs = []
             for msg in messages:
-                await msg.copy(
-                    chat_id=message.chat.id,
-                    caption=CUSTOM_CAPTION,
-                    reply_markup=InlineKeyboardMarkup([[
-                        InlineKeyboardButton("📜 Pirate Log", callback_data="about"),
-                        InlineKeyboardButton("🗺️ Close Map", callback_data="close")
-                    ]]),
-                    protect_content=PROTECT_CONTENT
+                if not msg or not msg.document:
+                    continue
+                    
+                caption = CUSTOM_CAPTION.format(
+                    previouscaption="" if not msg.caption else msg.caption.html,
+                    filename=msg.document.file_name
+                ) if CUSTOM_CAPTION else (msg.caption.html if msg.caption else "")
+                
+                reply_markup = msg.reply_markup if not DISABLE_CHANNEL_BUTTON else None
+                
+                try:
+                    if AUTO_DELETE_TIME > 0:
+                        copied_msg = await msg.copy(
+                            chat_id=message.from_user.id,
+                            caption=caption,
+                            parse_mode=ParseMode.HTML,
+                            reply_markup=reply_markup,
+                            protect_content=PROTECT_CONTENT
+                        )
+                        track_msgs.append(copied_msg)
+                    else:
+                        await msg.copy(
+                            chat_id=message.from_user.id,
+                            caption=caption,
+                            parse_mode=ParseMode.HTML,
+                            reply_markup=reply_markup,
+                            protect_content=PROTECT_CONTENT
+                        )
+                        await asyncio.sleep(0.5)
+                except FloodWait as e:
+                    await asyncio.sleep(e.value)
+                    if AUTO_DELETE_TIME > 0:
+                        copied_msg = await msg.copy(
+                            chat_id=message.from_user.id,
+                            caption=caption,
+                            parse_mode=ParseMode.HTML,
+                            reply_markup=reply_markup,
+                            protect_content=PROTECT_CONTENT
+                        )
+                        track_msgs.append(copied_msg)
+                    else:
+                        await msg.copy(
+                            chat_id=message.from_user.id,
+                            caption=caption,
+                            parse_mode=ParseMode.HTML,
+                            reply_markup=reply_markup,
+                            protect_content=PROTECT_CONTENT
+                        )
+                except Exception as e:
+                    print(f"Error sending file: {e}")
+                    await message.reply("⚠️ Failed to send some files. Please try again.")
+                    continue
+
+            if track_msgs and AUTO_DELETE_TIME > 0:
+                delete_data = await client.send_message(
+                    chat_id=message.from_user.id,
+                    text=AUTO_DELETE_MSG.format(time=AUTO_DELETE_TIME)
                 )
-                await asyncio.sleep(1)
-            
-            if AUTO_DELETE_MSG:
-                await asyncio.sleep(AUTO_DELETE_TIME)
-                await message.delete()
+                asyncio.create_task(delete_file(track_msgs, client, delete_data))
+                
             return
             
-    except Exception as e:
-        print(f"File delivery error: {e}")
-        await message.reply("⚠️ The treasure map is broken! Request a new one!")
-        return
+        except Exception as e:
+            print(f"File link processing error: {e}")
+            await message.reply("⚠️ Invalid or broken file link")
+            return
 
     # Normal start without payload
     if not await present_user(user_id):
@@ -198,11 +248,11 @@ async def start_handler(client: Client, message: Message):
         await message.delete()
         return
 
-    # Main menu - CORRECTED SECTION
+    # Main menu
     reply_markup = InlineKeyboardMarkup([
         [InlineKeyboardButton("📜 Pirate Log", callback_data="about"),
          InlineKeyboardButton("🗺️ Close Map", callback_data="close")]
-    ])  # This closing bracket now matches the opening one
+    ])
 
     if START_PIC:
         await message.reply_photo(
@@ -227,6 +277,6 @@ async def start_handler(client: Client, message: Message):
                 id=message.from_user.id
             ),
             reply_markup=reply_markup,
-            disable_web_page_preview=True,
+            link_preview_options={"is_disabled": True},
             quote=True
         )
