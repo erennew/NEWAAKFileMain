@@ -63,28 +63,45 @@ async def start_command(client: Client, message: Message):
 
     text = message.text
     if len(text) > 7:
-        try:
-            base64_string = text.split(" ", 1)[1]
-            string = await decode(base64_string)
-            argument = string.split("-")
-            if len(argument) == 3:
-                start = int(int(argument[1]) / abs(client.db_channel.id))
-                end = int(int(argument[2]) / abs(client.db_channel.id))
-                ids = list(range(start, end + 1)) if start <= end else list(range(start, end - 1, -1))
-            elif len(argument) == 2:
-                ids = [int(int(argument[1]) / abs(client.db_channel.id))]
-            else:
-                return
-        except:
-            return
+# Inside start_command (after checking len(text) > 7)
+try:
+    base64_string = text.split(" ", 1)[1]
+    string = await decode(base64_string)
+    argument = string.split("-")
+    if len(argument) == 3:
+        start = int(int(argument[1]) / abs(client.db_channel.id))
+        end = int(int(argument[2]) / abs(client.db_channel.id))
+        ids = list(range(start, end + 1)) if start <= end else list(range(start, end - 1, -1))
+    elif len(argument) == 2:
+        ids = [int(int(argument[1]) / abs(client.db_channel.id))]
+    else:
+        return
+except:
+    return
 
-        temp_msg = await message.reply("<blockquote>🧩 Fetching secret treasure...</blockquote>")
-        try:
-            messages = await get_messages(client, ids)
-        except:
-            await message.reply("<blockquote>😰 Something went wrong while retrieving files.</blockquote>")
-            return
-        await temp_msg.delete()
+# ⚡ NEW: Add boot sequence again before file send
+boot_sequence = get_random_boot_sequence()
+boot_msg_2 = await message.reply("<b>📁 Fetching pirate stash...</b>")
+for line in boot_sequence:
+    await asyncio.sleep(1.2)
+    try:
+        await boot_msg_2.edit(line)
+    except FloodWait as e:
+        await asyncio.sleep(e.value)
+        await boot_msg_2.edit(line)
+
+await asyncio.sleep(0.5)
+await boot_msg_2.delete()
+
+# Proceed to fetch files
+temp_msg = await message.reply("<blockquote>🧩 Fetching secret treasure...</blockquote>")
+try:
+    messages = await get_messages(client, ids)
+except:
+    await message.reply("<blockquote>😰 Something went wrong while retrieving files.</blockquote>")
+    return
+await temp_msg.delete()
+
 
         track_msgs = []
         for msg in messages:
