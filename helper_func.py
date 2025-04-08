@@ -9,7 +9,9 @@ from pyrogram import filters
 from pyrogram.enums import ChatMemberStatus
 from pyrogram.errors import FloodWait, UserNotParticipant
 from pyrogram.types import Message
-
+import time
+from typing import Tuple
+from collections import deque, defaultdict
 from config import (
     FORCE_SUB_CHANNEL_1,
     FORCE_SUB_CHANNEL_2,
@@ -19,7 +21,11 @@ from config import (
     AUTO_DELETE_TIME,
     AUTO_DEL_SUCCESS_MSG
 )
-
+# Rate limiting tracking
+from collections import deque, defaultdict
+request_timestamps = deque()
+user_request_timestamps = defaultdict(deque)
+user_rate_limit = {}
 # Initialize logger
 logger = logging.getLogger(__name__)
 
@@ -49,7 +55,51 @@ async def is_subscribed(filter, client, update) -> bool:
             continue
 
     return True
+async def is_user_limited(user_id: int) -> bool:
+    """Check if user has exceeded rate limits"""
+    now = time.time()
+    
+    # Global rate limit
+    while request_timestamps and now - request_timestamps[0] > TIME_WINDOW:
+        request_timestamps.popleft()
+    if len(request_timestamps) >= GLOBAL_REQUESTS:
+        return True
+    
+    # User-specific rate limit
+    user_queue = user_request_timestamps[user_id]
+    while user_queue and now - user_queue[0] > TIME_WINDOW:
+        user_queue.popleft()
+    
+    if len(user_queue) >= USER_REQUESTS:
+        return True
+    
+    request_timestamps.append(now)
+    user_queue.append(now)
+    return False
 
+async def check_flood(user_id: int) -> Tuple[bool, int]:
+    """Check if user is flooding with tiered warnings"""
+    now = time.time()
+    user_data = user_rate_limit.setdefault(user_id, {
+        "timestamps": [],
+        "warn_level": 0
+    })
+    
+    # Clean old requests
+    user_data["timestamps"] = [
+        t for t in user_data["timestamps"] 
+        if now - t < FLOOD_TIME_WINDOW
+    ]
+    
+    if len(user_data["timestamps"]) >= FLOOD_MAX_REQUESTS:
+        user_data["warn_level"] = 2
+        return True, 2
+    elif len(user_data["timestamps"]) >= (FLOOD_MAX_REQUESTS // 2):
+        user_data["warn_level"] = 1
+        return True, 1
+    
+    user_data["timestamps"].append(now)
+    return False, 0
 async def encode(string: str) -> str:
     """Encode string to URL-safe base64"""
     string_bytes = string.encode("ascii")
