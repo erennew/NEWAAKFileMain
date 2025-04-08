@@ -1,129 +1,172 @@
-# (©) WeekendsBotz
+# (©) WeekendsBotz - Luffy Edition v2.0
+import random
+import time
+import asyncio
+import logging
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
-from bot import Bot
-from config import ADMINS, DB_CHANNEL
-from helper_func import encode, get_message_id
-import logging
+from pyrogram.errors import FloodWait, RPCError
+from config import ADMINS, DB_CHANNEL, API_ID, API_HASH, BOT_TOKEN
 
-# Set up logging
+# Set up crash-resistant logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("luffy_bot.log"),
+        logging.StreamHandler()
+    ]
+)
 logger = logging.getLogger(__name__)
 
-async def get_valid_message(client: Client, user_id: int, prompt_text: str) -> tuple:
-    """
-    Improved message validation with better error handling
-    Returns: (message_object, message_id) or (None, None)
-    """
-    try:
-        user_message = await client.ask(
-            text=prompt_text,
-            chat_id=user_id,
-            filters=(filters.forwarded | (filters.text & ~filters.forwarded)),
-            timeout=60
+# Luffy Boot Animations
+BOOT_SEQUENCES = [
+    [
+        "🌀 Booting Gear 2...",
+        "💥 Steam surging through veins...",
+        "⚡ Activating Jet Pistol!",
+        "🔥 LUFFY IS READY!!"
+    ],
+    [
+        "⚙️ Initializing Gear 4...",
+        "💪 Inflating muscles...",
+        "🔒 Activating Boundman mode!",
+        "🦾 LUFFY IS PUMPED!!"
+    ],
+    [
+        "🌪️ Entering Gear 5...",
+        "🎨 Bending reality...",
+        "👑 Becoming the Warrior of Liberation...",
+        "💫 LUFFY IS IN GOD MODE!!"
+    ]
+]
+
+class LuffyBot(Client):
+    def __init__(self):
+        super().__init__(
+            "WeekendsBotz",
+            api_id=API_ID,
+            api_hash=API_HASH,
+            bot_token=BOT_TOKEN,
+            workers=200,
+            max_concurrent_transmissions=5
         )
+        self.db_channel = None
+        self._boot_anim = random.choice(BOOT_SEQUENCES)
+
+    async def _animate_boot(self):
+        """Show random Luffy boot sequence"""
+        for step in self._boot_anim:
+            logger.info(step)
+            await asyncio.sleep(1.5)
+
+    async def _safety_checks(self):
+        """Anti-crash system checks"""
+        checks = {
+            "DB Channel": lambda: self.db_channel.id if self.db_channel else None,
+            "Admins": lambda: ADMINS[0] if ADMINS else None,
+            "Bot Token": lambda: self.bot_token[:5] + "..." if self.bot_token else None
+        }
         
-        if not hasattr(client, 'db_channel'):
-            await user_message.reply("❌ DB Channel not configured", quote=True)
-            return None, None
+        for check_name, check_func in checks.items():
+            try:
+                if not check_func():
+                    raise RuntimeError(f"{check_name} check failed!")
+                logger.info(f"✅ {check_name} check passed")
+            except Exception as e:
+                logger.critical(f"❌ {check_name} validation failed: {e}")
+                return False
+        return True
+
+    async def start(self):
+        """Crash-resistant startup"""
+        try:
+            await self._animate_boot()
             
-        msg_id = await get_message_id(client, user_message)
-        if not msg_id:
-            await user_message.reply(
-                "❌ Invalid message\n\n"
-                "1. Must be forwarded from DB Channel\n"
-                "2. Or must be a valid DB Channel post link\n"
-                f"DB Channel ID: {client.db_channel.id}",
-                quote=True
-            )
-            return None, None
+            await super().start()
+            self.db_channel = await self.get_chat(DB_CHANNEL)
             
-        return user_message, msg_id
-        
-    except Exception as e:
-        logger.error(f"Error in get_valid_message: {e}")
-        return None, None
+            if not await self._safety_checks():
+                raise RuntimeError("Critical checks failed")
+            
+            me = await self.get_me()
+            logger.info(f"👑 {me.first_name} is now King of the Bots!")
+            
+            # Load handlers
+            self.setup_handlers()
+            
+            # Keep alive
+            while True:
+                await asyncio.sleep(3600)
+                
+        except FloodWait as e:
+            logger.warning(f"⏳ Flood control: Sleeping for {e.value}s")
+            await asyncio.sleep(e.value)
+        except RPCError as e:
+            logger.critical(f"☠️ RPC Error: {e}")
+        finally:
+            if self.is_initialized:
+                await self.stop()
 
-@Bot.on_message(filters.private & filters.user(ADMINS) & filters.command('batch'))
-async def batch_handler(client: Client, message: Message):
-    """Handle batch file link generation"""
-    # Verify DB channel is set up
-    if not hasattr(client, 'db_channel') or not client.db_channel:
-        await message.reply("❌ Error: DB Channel not configured")
-        return
+    def setup_handlers(self):
+        """All message handlers"""
+        @self.on_message(filters.private & filters.user(ADMINS) & filters.command('batch'))
+        async def batch_handler(client: Client, message: Message):
+            """Fixed batch link generator"""
+            try:
+                # Get first message
+                first = await client.ask(
+                    chat_id=message.from_user.id,
+                    text="📥 Forward FIRST message from DB channel",
+                    timeout=60
+                )
+                f_msg_id = first.forward_from_message_id or int(first.text.split("/")[-1])
+                
+                # Get last message
+                last = await client.ask(
+                    chat_id=message.from_user.id,
+                    text="📤 Forward LAST message from DB channel",
+                    timeout=60
+                )
+                s_msg_id = last.forward_from_message_id or int(last.text.split("/")[-1])
+                
+                # Generate batch link
+                batch_link = f"https://t.me/{client.username}?start=batch_{f_msg_id}_{s_msg_id}"
+                
+                await last.reply(
+                    f"🔗 Batch Link:\n`{batch_link}`",
+                    reply_markup=InlineKeyboardMarkup([[
+                        InlineKeyboardButton("Share", url=f"https://t.me/share/url?url={batch_link}")
+                    ]])
+                )
+                
+            except Exception as e:
+                logger.error(f"Batch error: {e}")
+                await message.reply("❌ Failed! Check logs.")
 
-    # Get first message
-    first_msg, f_msg_id = await get_valid_message(
-        client,
-        message.from_user.id,
-        "📥 Forward the FIRST message from DB Channel\n"
-        "OR send the DB Channel post link"
-    )
-    if not f_msg_id:
-        return
+        @self.on_message(filters.private & filters.user(ADMINS) & filters.command('genlink'))
+        async def genlink_handler(client: Client, message: Message):
+            """Single link generator"""
+            try:
+                msg = await client.ask(
+                    chat_id=message.from_user.id,
+                    text="📨 Forward message from DB channel",
+                    timeout=30
+                )
+                msg_id = msg.forward_from_message_id or int(msg.text.split("/")[-1])
+                
+                file_link = f"https://t.me/{client.username}?start=file_{msg_id}"
+                
+                await msg.reply(
+                    f"📤 File Link:\n`{file_link}`",
+                    reply_markup=InlineKeyboardMarkup([[
+                        InlineKeyboardButton("Share", url=f"https://t.me/share/url?url={file_link}")
+                    ]])
+                )
+            except Exception as e:
+                logger.error(f"Genlink error: {e}")
+                await message.reply("💥 Failed! Check logs.")
 
-    # Get last message
-    second_msg, s_msg_id = await get_valid_message(
-        client,
-        message.from_user.id,
-        "📤 Forward the LAST message from DB Channel\n"
-        "OR send the DB Channel post link"
-    )
-    if not s_msg_id:
-        return
-
-    # Generate and send link
-    try:
-        # Simple string format without channel ID multiplication
-        string = f"get_batch_{f_msg_id}_{s_msg_id}"
-        base64_string = await encode(string)
-        link = f"https://t.me/{client.username}?start={base64_string}"
-        
-        reply_markup = InlineKeyboardMarkup([[
-            InlineKeyboardButton("🔗 Share Link", url=f'https://telegram.me/share/url?url={link}')
-        ]])
-        
-        await second_msg.reply_text(
-            f"🔗 Batch Link Generated:\n\n<code>{link}</code>",
-            reply_markup=reply_markup,
-            quote=True
-        )
-    except Exception as e:
-        logger.error(f"Batch error: {e}")
-        await message.reply("❌ Failed to generate batch link")
-
-@Bot.on_message(filters.private & filters.user(ADMINS) & filters.command('genlink'))
-async def link_generator(client: Client, message: Message):
-    """Handle single file link generation"""
-    if not hasattr(client, 'db_channel') or not client.db_channel:
-        await message.reply("❌ Error: DB Channel not configured")
-        return
-
-    # Get message from user
-    channel_msg, msg_id = await get_valid_message(
-        client,
-        message.from_user.id,
-        "📨 Forward a message from DB Channel\n"
-        "OR send the DB Channel post link"
-    )
-    if not msg_id:
-        return
-
-    # Generate and send link
-    try:
-        # Simple string format without channel ID multiplication
-        string = f"get_file_{msg_id}"
-        base64_string = await encode(string)
-        link = f"https://t.me/{client.username}?start={base64_string}"
-        
-        reply_markup = InlineKeyboardMarkup([[
-            InlineKeyboardButton("🔗 Share Link", url=f'https://telegram.me/share/url?url={link}')
-        ]])
-        
-        await channel_msg.reply_text(
-            f"🔗 File Link Generated:\n\n<code>{link}</code>",
-            reply_markup=reply_markup,
-            quote=True
-        )
-    except Exception as e:
-        logger.error(f"Genlink error: {e}")
-        await message.reply("❌ Failed to generate file link")
+if __name__ == "__main__":
+    bot = LuffyBot()
+    asyncio.run(bot.start())
