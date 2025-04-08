@@ -40,7 +40,7 @@ USER_REQUESTS = int(os.getenv("USER_REQUESTS", 3))
 FLOOD_MAX_REQUESTS = int(os.getenv("FLOOD_MAX_REQUESTS", 5))
 FLOOD_TIME_WINDOW = int(os.getenv("FLOOD_TIME_WINDOW", 10))
 FLOOD_COOLDOWN = int(os.getenv("FLOOD_COOLDOWN", 30))
-
+SOFT_THROTTLE_WINDOW = int(os.environ.get("SOFT_THROTTLE_WINDOW", 10))
 # ===== Boot Animation Settings ===== #
 BOOT_DELAY = float(os.getenv("BOOT_DELAY", 0.8))
 MIN_BOOT_STEPS = int(os.getenv("MIN_BOOT_STEPS", 3))
