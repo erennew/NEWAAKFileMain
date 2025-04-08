@@ -2,44 +2,60 @@
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from bot import Bot
-from config import ADMINS
+from config import ADMINS, DB_CHANNEL
 from helper_func import encode, get_message_id
+import logging
+
+# Set up logging
+logger = logging.getLogger(__name__)
 
 async def get_valid_message(client: Client, user_id: int, prompt_text: str) -> tuple:
     """
-    Get a valid message from user with error handling
-    Returns: (message_object, message_id) or (None, None) on failure
+    Improved message validation with better error handling
+    Returns: (message_object, message_id) or (None, None)
     """
-    while True:
-        try:
-            user_message = await client.ask(
-                text=prompt_text,
-                chat_id=user_id,
-                filters=(filters.forwarded | (filters.text & ~filters.forwarded)),
-                timeout=60
-            )
+    try:
+        user_message = await client.ask(
+            text=prompt_text,
+            chat_id=user_id,
+            filters=(filters.forwarded | (filters.text & ~filters.forwarded)),
+            timeout=60
+        )
+        
+        if not hasattr(client, 'db_channel'):
+            await user_message.reply("❌ DB Channel not configured", quote=True)
+            return None, None
             
-            msg_id = await get_message_id(client, user_message)
-            if msg_id:
-                return user_message, msg_id
-                
+        msg_id = await get_message_id(client, user_message)
+        if not msg_id:
             await user_message.reply(
                 "❌ Invalid message\n\n"
-                "The forwarded post must be from my DB Channel "
-                "or you must send a valid DB Channel post link",
+                "1. Must be forwarded from DB Channel\n"
+                "2. Or must be a valid DB Channel post link\n"
+                f"DB Channel ID: {client.db_channel.id}",
                 quote=True
             )
-        except Exception as e:
-            print(f"Error in get_valid_message: {e}")
             return None, None
+            
+        return user_message, msg_id
+        
+    except Exception as e:
+        logger.error(f"Error in get_valid_message: {e}")
+        return None, None
 
 @Bot.on_message(filters.private & filters.user(ADMINS) & filters.command('batch'))
-async def batch(client: Client, message: Message):
+async def batch_handler(client: Client, message: Message):
+    """Handle batch file link generation"""
+    # Verify DB channel is set up
+    if not hasattr(client, 'db_channel') or not client.db_channel:
+        await message.reply("❌ Error: DB Channel not configured")
+        return
+
     # Get first message
     first_msg, f_msg_id = await get_valid_message(
         client,
         message.from_user.id,
-        "📥 Forward the FIRST message from DB Channel (with quotes)\n"
+        "📥 Forward the FIRST message from DB Channel\n"
         "OR send the DB Channel post link"
     )
     if not f_msg_id:
@@ -49,57 +65,65 @@ async def batch(client: Client, message: Message):
     second_msg, s_msg_id = await get_valid_message(
         client,
         message.from_user.id,
-        "📤 Forward the LAST message from DB Channel (with quotes)\n"
+        "📤 Forward the LAST message from DB Channel\n"
         "OR send the DB Channel post link"
     )
     if not s_msg_id:
         return
 
-    # Generate link
+    # Generate and send link
     try:
-        string = f"batch-{f_msg_id}-{s_msg_id}"
+        # Simple string format without channel ID multiplication
+        string = f"get_batch_{f_msg_id}_{s_msg_id}"
         base64_string = await encode(string)
         link = f"https://t.me/{client.username}?start={base64_string}"
         
         reply_markup = InlineKeyboardMarkup([[
-            InlineKeyboardButton("🔁 Share URL", url=f'https://telegram.me/share/url?url={link}')
+            InlineKeyboardButton("🔗 Share Link", url=f'https://telegram.me/share/url?url={link}')
         ]])
         
         await second_msg.reply_text(
-            f"✅ Here is your batch link:\n\n{link}",
-            quote=True,
-            reply_markup=reply_markup
+            f"🔗 Batch Link Generated:\n\n<code>{link}</code>",
+            reply_markup=reply_markup,
+            quote=True
         )
     except Exception as e:
-        print(f"Error generating batch link: {e}")
-        await message.reply("❌ Failed to generate link. Please try again.")
+        logger.error(f"Batch error: {e}")
+        await message.reply("❌ Failed to generate batch link")
 
 @Bot.on_message(filters.private & filters.user(ADMINS) & filters.command('genlink'))
 async def link_generator(client: Client, message: Message):
+    """Handle single file link generation"""
+    if not hasattr(client, 'db_channel') or not client.db_channel:
+        await message.reply("❌ Error: DB Channel not configured")
+        return
+
     # Get message from user
     channel_msg, msg_id = await get_valid_message(
         client,
         message.from_user.id,
-        "📨 Forward a message from DB Channel (with quotes)\n"
+        "📨 Forward a message from DB Channel\n"
         "OR send the DB Channel post link"
     )
     if not msg_id:
         return
 
-    # Generate link
+    # Generate and send link
     try:
-        base64_string = await encode(f"file-{msg_id}")
+        # Simple string format without channel ID multiplication
+        string = f"get_file_{msg_id}"
+        base64_string = await encode(string)
         link = f"https://t.me/{client.username}?start={base64_string}"
         
         reply_markup = InlineKeyboardMarkup([[
-            InlineKeyboardButton("🔁 Share URL", url=f'https://telegram.me/share/url?url={link}')
+            InlineKeyboardButton("🔗 Share Link", url=f'https://telegram.me/share/url?url={link}')
         ]])
         
         await channel_msg.reply_text(
-            f"✅ Here is your file link:\n\n{link}",
-            quote=True,
-            reply_markup=reply_markup
+            f"🔗 File Link Generated:\n\n<code>{link}</code>",
+            reply_markup=reply_markup,
+            quote=True
         )
     except Exception as e:
-        print(f"Error generating file link: {e}")
-        await message.reply("❌ Failed to generate link. Please try again.")
+        logger.error(f"Genlink error: {e}")
+        await message.reply("❌ Failed to generate file link")
