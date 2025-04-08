@@ -245,3 +245,22 @@ async def _auto_delete(*messages: Message):
             await msg.delete()
         except Exception:
             pass
+
+from time import time
+
+# Memory cache for soft throttle
+user_last_action = {}
+
+# Change time window as needed (in seconds)
+SOFT_THROTTLE_WINDOW = 10
+
+async def is_user_limited(user_id: int) -> bool:
+    current_time = time()
+    last_time = user_last_action.get(user_id, 0)
+
+    if current_time - last_time < SOFT_THROTTLE_WINDOW:
+        return True
+
+    user_last_action[user_id] = current_time
+    return False
+
