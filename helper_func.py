@@ -4,30 +4,32 @@ import re
 import asyncio
 import logging
 import time
-from collections import deque
+from collections import deque, defaultdict
 from typing import List, Optional, Tuple
-from config import SOFT_THROTTLE_WINDOW
-from collections import defaultdict
 from datetime import datetime, timedelta
-from config import FLOOD_MAX_REQUESTS, FLOOD_TIME_WINDOW, GLOBAL_REQUESTS, GLOBAL_TIME_WINDOW
 from pyrogram import filters
 from pyrogram.enums import ChatMemberStatus
 from pyrogram.errors import FloodWait, UserNotParticipant
-from pyrogram.types import Message
-from pyrogram.errors.exceptions.bad_request_400 import UserNotParticipant
+from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from config import (
-    FORCE_SUB_CHANNEL_1, FORCE_SUB_CHANNEL_2, 
-    FORCE_SUB_CHANNEL_3, FORCE_SUB_CHANNEL_4,
-    ADMINS, AUTO_DELETE_TIME, AUTO_DEL_SUCCESS_MSG,
-    AUTO_CLEAN, DELETE_DELAY, GLOBAL_REQUESTS,
-    USER_REQUESTS, TIME_WINDOW, FLOOD_MAX_REQUESTS,
-    FLOOD_TIME_WINDOW
+    ADMINS, DB_CHANNEL, AUTO_DELETE_TIME, AUTO_DEL_SUCCESS_MSG,
+    AUTO_CLEAN, DELETE_DELAY, GLOBAL_REQUESTS, USER_REQUESTS,
+    TIME_WINDOW, FLOOD_MAX_REQUESTS, FLOOD_TIME_WINDOW,
+    SOFT_THROTTLE_WINDOW, FORCE_SUB_CHANNEL_1, FORCE_SUB_CHANNEL_2,
+    FORCE_SUB_CHANNEL_3, FORCE_SUB_CHANNEL_4
 )
-from config import DB_CHANNEL
+
+# ===== INITIALIZATION ===== #
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
 # ===== GLOBAL RATE LIMIT TRACKING ===== #
 request_timestamps = deque()
-user_request_timestamps = {}
-user_rate_limit = {}
+user_request_timestamps = defaultdict(deque)
+user_last_action = {}
 
 # ===== SUBSCRIPTION CHECK ===== #
 async def is_subscribed(filter, client, update) -> bool:
@@ -54,16 +56,27 @@ async def is_subscribed(filter, client, update) -> bool:
             continue
 
         try:
-            member = await client.get_chat_member(
-                chat_id=channel_id, 
-                user_id=user_id
-            )
+            member = await client.get_chat_member(chat_id=channel_id, user_id=user_id)
             if member.status not in member_status:
+                await client.send_message(
+                    chat_id=user_id,
+                    text=f"❌ Please join our channel first: @{channel_id}",
+                    reply_markup=InlineKeyboardMarkup([[
+                        InlineKeyboardButton("Join Channel", url=f"t.me/{channel_id}")
+                    ]])
+                )
                 return False
         except UserNotParticipant:
+            await client.send_message(
+                chat_id=user_id,
+                text=f"❌ Please join our channel first: @{channel_id}",
+                reply_markup=InlineKeyboardMarkup([[
+                    InlineKeyboardButton("Join Channel", url=f"t.me/{channel_id}")
+                ]])
+            )
             return False
         except Exception as e:
-            logging.error(f"Subscription check error: {e}")
+            logger.error(f"Subscription check error for channel {channel_id}: {e}")
             continue
 
     return True
@@ -86,7 +99,7 @@ async def decode(base64_string: str) -> str:
     return string_bytes.decode("ascii")
 
 # ===== MESSAGE HANDLING ===== #
-async def get_messages(client, message_ids: List[int]):
+async def get_messages(client, message_ids: List[int]) -> List[Message]:
     """Batch fetch messages with flood control"""
     messages = []
     total_messages = 0
@@ -98,46 +111,94 @@ async def get_messages(client, message_ids: List[int]):
                 chat_id=client.db_channel.id,
                 message_ids=batch_ids
             )
-            messages.extend(msgs)
+            if isinstance(msgs, list):
+                messages.extend(msgs)
+            else:
+                messages.append(msgs)
             total_messages += len(batch_ids)
         except FloodWait as e:
+            logger.warning(f"Flood wait for {e.value} seconds")
             await asyncio.sleep(e.value)
         except Exception as e:
-            logging.error(f"Failed to get messages: {e}")
+            logger.error(f"Failed to get messages: {e}")
             break
             
     return messages
 
-async def get_message_id(client, message: Message) -> int:
-    """Extract message ID from forwarded post or URL"""
-    if message.forward_from_chat:
-        if message.forward_from_chat.id == client.db_channel.id:
-            return message.forward_from_message_id
-        return 0
-    
-    if message.forward_sender_name or not message.text:
-        return 0
-        
-    pattern = r"https://t.me/(?:c/)?(.*)/(\d+)"
-    matches = re.match(pattern, message.text)
-    if not matches:
-        return 0
-        
-    channel_id, msg_id = matches.groups()
+async def get_message_id(client, message: Message) -> Optional[int]:
+    """Improved message ID validation with error handling"""
     try:
-        msg_id = int(msg_id)
-    except ValueError:
-        return 0
+        if message.forward_from_chat:
+            if message.forward_from_chat.id == client.db_channel.id:
+                return message.forward_from_message_id
+            return None
         
-    if channel_id.isdigit():
-        if f"-100{channel_id}" == str(client.db_channel.id):
-            return msg_id
-    elif channel_id == client.db_channel.username:
+        if not message.text:
+            return None
+            
+        # Handle both t.me and telegram.me links
+        pattern = r"(?:https?://)?(?:t\.me|telegram\.me)/(?:c/)?([^/]+)/(\d+)"
+        matches = re.match(pattern, message.text.strip())
+        if not matches:
+            return None
+            
+        channel_ref, msg_id = matches.groups()
+        
+        # Convert message ID
+        try:
+            msg_id = int(msg_id)
+        except ValueError:
+            return None
+            
+        # Validate channel match
+        if channel_ref.isdigit():
+            if f"-100{channel_ref}" != str(client.db_channel.id):
+                return None
+        elif channel_ref.lower() != getattr(client.db_channel, 'username', '').lower():
+            return None
+            
         return msg_id
         
-    return 0
+    except Exception as e:
+        logger.error(f"Message ID validation error: {e}")
+        return None
 
-# ===== TIME FORMATTING ===== #
+# ===== RATE LIMITING ===== #
+async def check_rate_limit(user_id: int) -> Tuple[bool, Optional[int]]:
+    """Combined rate limit check with cooldown remaining"""
+    now = time.time()
+    
+    # Global limit
+    while request_timestamps and now - request_timestamps[0] > TIME_WINDOW:
+        request_timestamps.popleft()
+    if len(request_timestamps) >= GLOBAL_REQUESTS:
+        return True, None
+    
+    # User limit
+    user_queue = user_request_timestamps[user_id]
+    while user_queue and now - user_queue[0] > TIME_WINDOW:
+        user_queue.popleft()
+    
+    if len(user_queue) >= USER_REQUESTS:
+        cooldown = int(TIME_WINDOW - (now - user_queue[0]))
+        return True, cooldown
+    
+    user_queue.append(now)
+    request_timestamps.append(now)
+    return False, None
+
+async def is_soft_limited(user_id: int) -> bool:
+    """Soft throttle: Prevents user spamming within a few seconds"""
+    current_time = time.time()
+    last_time = user_last_action.get(user_id, 0)
+
+    if current_time - last_time < SOFT_THROTTLE_WINDOW:
+        return True
+
+    user_last_action[user_id] = current_time
+    return False
+
+# ===== UTILITY FUNCTIONS ===== #
 def get_readable_time(seconds: int) -> str:
     """Convert seconds to human-readable time"""
     intervals = [
@@ -156,80 +217,6 @@ def get_readable_time(seconds: int) -> str:
     
     return " ".join(result) if result else "0s"
 
-# ===== AUTO DELETE HANDLER ===== #
-async def delete_file(messages: List[Message], client, process: Message):
-    """Delete messages after delay and send confirmation"""
-    await asyncio.sleep(AUTO_DELETE_TIME)
-    
-    for msg in messages:
-        try:
-            await msg.delete()
-        except FloodWait as e:
-            await asyncio.sleep(e.value)
-            await msg.delete()
-        except Exception as e:
-            logging.error(f"Failed to delete message {msg.id}: {e}")
-    
-    try:
-        await process.edit_text(AUTO_DEL_SUCCESS_MSG)
-        if AUTO_CLEAN:
-            await asyncio.sleep(DELETE_DELAY)
-            await process.delete()
-    except Exception as e:
-        logging.error(f"Failed to edit process message: {e}")
-
-# ===== RATE LIMITING ===== #
-def is_user_limited(user_id: int) -> bool:
-    """Check if user has exceeded rate limits"""
-    now = time.time()
-    
-    # Global rate limit
-    while request_timestamps and now - request_timestamps[0] > TIME_WINDOW:
-        request_timestamps.popleft()
-    if len(request_timestamps) >= GLOBAL_REQUESTS:
-        return True
-    
-    # User-specific rate limit
-    if user_id not in user_request_timestamps:
-        user_request_timestamps[user_id] = deque()
-    
-    user_queue = user_request_timestamps[user_id]
-    while user_queue and now - user_queue[0] > TIME_WINDOW:
-        user_queue.popleft()
-    
-    if len(user_queue) >= USER_REQUESTS:
-        return True
-    
-    # Record the request
-    request_timestamps.append(now)
-    user_queue.append(now)
-    return False
-
-async def check_flood(user_id: int) -> Tuple[bool, int]:
-    """Check if user is flooding with tiered warnings"""
-    now = time.time()
-    user_data = user_rate_limit.setdefault(user_id, {
-        "timestamps": [],
-        "warn_level": 0
-    })
-    
-    # Clean old requests
-    user_data["timestamps"] = [
-        t for t in user_data["timestamps"] 
-        if now - t < FLOOD_TIME_WINDOW
-    ]
-    
-    if len(user_data["timestamps"]) >= FLOOD_MAX_REQUESTS:
-        user_data["warn_level"] = 2
-        return True, 2
-    elif len(user_data["timestamps"]) >= (FLOOD_MAX_REQUESTS // 2):
-        user_data["warn_level"] = 1
-        return True, 1
-    
-    user_data["timestamps"].append(now)
-    return False, 0
-
-# ===== MESSAGE UTILITIES ===== #
 async def reply_with_clean(message: Message, text: str, **kwargs):
     """Reply with auto-delete functionality"""
     reply = await message.reply(text, **kwargs)
@@ -243,28 +230,101 @@ async def _auto_delete(*messages: Message):
     for msg in messages:
         try:
             await msg.delete()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.error(f"Failed to auto-delete message: {e}")
 
-from time import time
+# ===== BATCH HANDLER ===== #
+async def get_valid_db_message(client, user_id: int, ask_text: str) -> Tuple[Optional[Message], Optional[int]]:
+    """Get valid message from DB channel with retry logic"""
+    try:
+        response = await client.ask(
+            chat_id=user_id,
+            text=ask_text,
+            filters=(filters.forwarded | (filters.text & ~filters.forwarded)),
+            timeout=60
+        )
+        msg_id = await get_message_id(client, response)
+        if msg_id:
+            return response, msg_id
+        
+        await response.reply("❌ Invalid DB Channel message. Please forward from DB channel or send direct link.", quote=True)
+        return None, None
+    except Exception as e:
+        logger.error(f"Error getting valid DB message: {e}")
+        return None, None
 
-# Memory cache for soft throttle
-user_last_action = {}
+@Bot.on_message(filters.private & filters.user(ADMINS) & filters.command('batch'))
+async def batch_handler(client: Client, message: Message):
+    """Handle batch file requests"""
+    # Check DB channel
+    if not hasattr(client, 'db_channel') or not client.db_channel:
+        await message.reply("❌ Database channel not configured!")
+        return
 
-# ===== SOFT THROTTLE (PER-USER SHORT TIME WINDOW) ===== #
-from time import time as time_now
+    # Get first message
+    resp1, f_msg_id = await get_valid_db_message(
+        client,
+        message.from_user.id,
+        "<b>📥 Forward the FIRST Message from DB Channel or Send Link</b>"
+    )
+    if not f_msg_id:
+        return
 
-# Memory cache for soft throttle
-user_last_action = {}
+    # Get last message
+    resp2, s_msg_id = await get_valid_db_message(
+        client,
+        message.from_user.id,
+        "<b>📤 Forward the LAST Message from DB Channel or Send Link</b>"
+    )
+    if not s_msg_id:
+        return
 
-async def is_soft_limited(user_id: int) -> bool:
-    """Soft throttle: Prevents user spamming within a few seconds"""
-    current_time = time_now()
-    last_time = user_last_action.get(user_id, 0)
+    # Generate link
+    try:
+        encoded = await encode(f"get_{f_msg_id}_{s_msg_id}")
+        link = f"https://t.me/{client.username}?start={encoded}"
+        
+        reply_markup = InlineKeyboardMarkup([[
+            InlineKeyboardButton("🔁 Share Link", url=f"https://telegram.me/share/url?url={link}")
+        ]])
+        
+        await resp2.reply_text(
+            f"<b>✅ Batch Link Generated!</b>\n\n<code>{link}</code>",
+            reply_markup=reply_markup,
+            quote=True
+        )
+    except Exception as e:
+        logger.error(f"Batch link generation failed: {e}")
+        await message.reply("❌ Failed to generate batch link. Please try again.")
 
-    if current_time - last_time < SOFT_THROTTLE_WINDOW:
-        return True
+@Bot.on_message(filters.private & filters.user(ADMINS) & filters.command('genlink'))
+async def genlink_handler(client: Client, message: Message):
+    """Handle single file link generation"""
+    if not hasattr(client, 'db_channel') or not client.db_channel:
+        await message.reply("❌ Database channel not configured!")
+        return
 
-    user_last_action[user_id] = current_time
-    return False
+    resp, msg_id = await get_valid_db_message(
+        client,
+        message.from_user.id,
+        "<b>📬 Forward a DB Channel Message or Send Link</b>"
+    )
+    if not msg_id:
+        return
 
+    try:
+        encoded = await encode(f"get_{msg_id}")
+        link = f"https://t.me/{client.username}?start={encoded}"
+        
+        reply_markup = InlineKeyboardMarkup([[
+            InlineKeyboardButton("🔁 Share Link", url=f"https://telegram.me/share/url?url={link}")
+        ]])
+        
+        await resp.reply_text(
+            f"<b>✅ File Link Generated!</b>\n\n<code>{link}</code>",
+            reply_markup=reply_markup,
+            quote=True
+        )
+    except Exception as e:
+        logger.error(f"Single link generation failed: {e}")
+        await message.reply("❌ Failed to generate file link. Please try again.")
