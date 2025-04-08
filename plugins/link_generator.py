@@ -24,6 +24,11 @@ async def get_valid_db_message(client, user_id, ask_text):
 
 @Bot.on_message(filters.private & filters.user(ADMINS) & filters.command('batch'))
 async def batch(client: Client, message: Message):
+    # Verify DB channel is configured
+    if not hasattr(client, 'db_channel') or not client.db_channel:
+        await message.reply("❌ DB Channel not configured!")
+        return
+
     resp1, f_msg_id = await get_valid_db_message(
         client,
         message.from_user.id,
@@ -40,38 +45,20 @@ async def batch(client: Client, message: Message):
     if not s_msg_id:
         return
 
-    encoded = await encode(f"get-{f_msg_id * abs(client.db_channel.id)}-{s_msg_id * abs(client.db_channel.id)}")
-    link = f"https://t.me/{client.username}?start={encoded}"
+    try:
+        # Simplified ID handling - remove multiplication
+        encoded = await encode(f"get-{f_msg_id}-{s_msg_id}")
+        link = f"https://t.me/{client.username}?start={encoded}"
+    except Exception as e:
+        await message.reply(f"❌ Link generation failed: {str(e)}")
+        return
 
     reply_markup = InlineKeyboardMarkup([
         [InlineKeyboardButton("🔁 Share Link", url=f"https://telegram.me/share/url?url={link}")]
     ])
 
     await resp2.reply_text(
-        f"<b>🏴‍☠️ Here’s your treasure map!</b>\n\n<code>{link}</code>",
-        reply_markup=reply_markup,
-        quote=True
-    )
-
-@Bot.on_message(filters.private & filters.user(ADMINS) & filters.command('genlink'))
-async def genlink(client: Client, message: Message):
-    resp, msg_id = await get_valid_db_message(
-        client,
-        message.from_user.id,
-        "<b>📬 Forward a DB Channel Message or Send its Link</b>"
-    )
-    if not msg_id:
-        return
-
-    encoded = await encode(f"get-{msg_id * abs(client.db_channel.id)}")
-    link = f"https://t.me/{client.username}?start={encoded}"
-
-    reply_markup = InlineKeyboardMarkup([
-        [InlineKeyboardButton("🔁 Share Link", url=f"https://telegram.me/share/url?url={link}")]
-    ])
-
-    await resp.reply_text(
-        f"<b>🏴‍☠️ Here’s your treasure link!</b>\n\n<code>{link}</code>",
+        f"<b>🏴‍☠️ Here's your batch link!</b>\n\n<code>{link}</code>",
         reply_markup=reply_markup,
         quote=True
     )
