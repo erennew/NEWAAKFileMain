@@ -39,8 +39,8 @@ async def batch_handler(client: Client, message: Message):
         await second_message.reply_text(
             f"<b>🏴‍☠️ Here's your treasure map!</b>\n\n<code>{link}</code>",
             reply_markup=InlineKeyboardMarkup([
-                # [InlineKeyboardButton("🔁 Share Link", url=f"https://telegram.me/share/url?url={link}")],
-                [InlineKeyboardButton("☠️ Get Files Again", url=link)]
+                 [InlineKeyboardButton("🔁 Share Link", url=f"https://telegram.me/share/url?url={link}")],
+               # [InlineKeyboardButton("☠️ Get Files Again", url=link)]
             ]),
             quote=True
         )
@@ -69,8 +69,8 @@ async def genlink_handler(client: Client, message: Message):
         await forward.reply_text(
             f"<b>🏴‍☠️ Here's your treasure link!</b>\n\n<code>{link}</code>",
             reply_markup=InlineKeyboardMarkup([
-                # [InlineKeyboardButton("🔁 Share Link", url=f"https://telegram.me/share/url?url={link}")],
-                [InlineKeyboardButton("☠️ Get File Again", url=link)]
+                 [InlineKeyboardButton("🔁 Share Link", url=f"https://telegram.me/share/url?url={link}")],
+                #[InlineKeyboardButton("☠️ Get File Again", url=link)]
             ]),
             quote=True
         )
