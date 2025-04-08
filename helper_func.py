@@ -33,7 +33,26 @@ logger = logging.getLogger(__name__)
 request_timestamps = deque()
 user_request_timestamps = defaultdict(deque)
 user_rate_limit = {}
+# (©) WeekendsBotz
+# ... (keep all your existing imports and code above)
 
+async def reply_with_clean(message: Message, text: str, **kwargs):
+    """Reply with auto-delete functionality"""
+    reply = await message.reply(text, **kwargs)
+    if AUTO_CLEAN:
+        asyncio.create_task(_auto_delete(reply, message))
+    return reply
+
+async def _auto_delete(*messages: Message):
+    """Background task to delete messages"""
+    await asyncio.sleep(DELETE_DELAY)
+    for msg in messages:
+        try:
+            await msg.delete()
+        except Exception as e:
+            logger.error(f"Failed to auto-delete message: {e}")
+
+# ... (keep all your existing code below)
 async def is_subscribed(filter, client, update) -> bool:
     """Check if user is subscribed to required channels"""
     if not any([FORCE_SUB_CHANNEL_1, FORCE_SUB_CHANNEL_2, FORCE_SUB_CHANNEL_3, FORCE_SUB_CHANNEL_4]):
