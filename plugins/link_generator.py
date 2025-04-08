@@ -4,7 +4,6 @@ from bot import Bot
 from config import ADMINS
 from helper_func import encode, get_message_id
 
-# ⚙️ Helper function to get a valid DB Channel message
 async def get_valid_db_message(client, user_id, ask_text):
     while True:
         try:
@@ -21,9 +20,8 @@ async def get_valid_db_message(client, user_id, ask_text):
         if msg_id:
             return response, msg_id
         else:
-            await response.reply("❌ <b>Invalid DB Channel message.</b>\n\nMake sure it's forwarded from or linked to the original DB Channel.", quote=True)
+            await response.reply("❌ <b>Invalid DB Channel message.</b>\nMake sure it's forwarded from or linked to the original DB Channel.", quote=True)
 
-# 🏴‍☠️ /batch - Generate file batch links from DB posts
 @Bot.on_message(filters.private & filters.user(ADMINS) & filters.command('batch'))
 async def batch(client: Client, message: Message):
     resp1, f_msg_id = await get_valid_db_message(
@@ -42,7 +40,6 @@ async def batch(client: Client, message: Message):
     if not s_msg_id:
         return
 
-    # Encode the link string
     encoded = await encode(f"get-{f_msg_id * abs(client.db_channel.id)}-{s_msg_id * abs(client.db_channel.id)}")
     link = f"https://t.me/{client.username}?start={encoded}"
 
@@ -56,7 +53,6 @@ async def batch(client: Client, message: Message):
         quote=True
     )
 
-# 🧭 /genlink - Generate link for a single post
 @Bot.on_message(filters.private & filters.user(ADMINS) & filters.command('genlink'))
 async def genlink(client: Client, message: Message):
     resp, msg_id = await get_valid_db_message(
