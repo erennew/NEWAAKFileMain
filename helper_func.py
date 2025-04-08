@@ -3,6 +3,8 @@ import base64
 import re
 import asyncio
 import logging
+import time
+from collections import deque, defaultdict
 from typing import List, Optional, Tuple
 
 from pyrogram import filters
@@ -17,11 +19,20 @@ from config import (
     FORCE_SUB_CHANNEL_4,
     ADMINS,
     AUTO_DELETE_TIME,
-    AUTO_DEL_SUCCESS_MSG
+    AUTO_DEL_SUCCESS_MSG,
+    FLOOD_MAX_REQUESTS,
+    FLOOD_TIME_WINDOW,
+    USER_REQUESTS,
+    TIME_WINDOW
 )
 
 # Initialize logger
 logger = logging.getLogger(__name__)
+
+# Rate limiting tracking
+request_timestamps = deque()
+user_request_timestamps = defaultdict(deque)
+user_rate_limit = {}
 
 async def is_subscribed(filter, client, update) -> bool:
     """Check if user is subscribed to required channels"""
@@ -58,7 +69,7 @@ async def encode(string: str) -> str:
 
 async def decode(base64_string: str) -> str:
     """Decode URL-safe base64 to string"""
-    base64_string = base64_string.strip("=")  # Handle padding for old links
+    base64_string = base64_string.strip("=")
     padding = "=" * (-len(base64_string) % 4)
     base64_bytes = (base64_string + padding).encode("ascii")
     string_bytes = base64.urlsafe_b64decode(base64_bytes)
@@ -97,7 +108,6 @@ async def get_message_id(client, message: Message) -> Optional[int]:
     if not message.text:
         return None
         
-    # Handle both t.me and telegram.me links
     pattern = r"(?:https?://)?(?:t\.me|telegram\.me)/(?:c/)?([^/]+)/(\d+)"
     matches = re.match(pattern, message.text.strip())
     if not matches:
@@ -110,7 +120,6 @@ async def get_message_id(client, message: Message) -> Optional[int]:
     except ValueError:
         return None
         
-    # Validate channel match
     if channel_ref.isdigit():
         if f"-100{channel_ref}" != str(client.db_channel.id):
             return None
@@ -154,6 +163,28 @@ async def delete_file(messages: List[Message], client, process: Message) -> None
         await process.edit_text(AUTO_DEL_SUCCESS_MSG)
     except Exception as e:
         logger.error(f"Failed to edit process message: {e}")
+
+def is_user_limited(user_id: int) -> bool:
+    """Check if user has exceeded rate limits"""
+    now = time.time()
+    
+    # Global rate limit
+    while request_timestamps and now - request_timestamps[0] > TIME_WINDOW:
+        request_timestamps.popleft()
+    if len(request_timestamps) >= GLOBAL_REQUESTS:
+        return True
+    
+    # User-specific rate limit
+    user_queue = user_request_timestamps[user_id]
+    while user_queue and now - user_queue[0] > TIME_WINDOW:
+        user_queue.popleft()
+    
+    if len(user_queue) >= USER_REQUESTS:
+        return True
+    
+    request_timestamps.append(now)
+    user_queue.append(now)
+    return False
 
 # Create filter for subscription check
 subscribed = filters.create(is_subscribed)
