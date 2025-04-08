@@ -8,7 +8,7 @@ from pyrogram.errors import FloodWait, RPCError
 from bot import Bot
 from config import ADMINS, DB_CHANNEL, AUTO_DELETE_TIME, AUTO_DELETE_MSG, AUTO_DEL_SUCCESS_MSG
 from helper_func import encode, is_user_limited
-
+from helper_func import encode, is_user_limited
 
 @Bot.on_message(
     filters.private &
