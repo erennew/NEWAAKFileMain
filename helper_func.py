@@ -3,8 +3,6 @@ import base64
 import re
 import asyncio
 import logging
-import time
-from collections import deque, defaultdict
 from typing import List, Optional, Tuple
 
 from pyrogram import filters
@@ -19,40 +17,12 @@ from config import (
     FORCE_SUB_CHANNEL_4,
     ADMINS,
     AUTO_DELETE_TIME,
-    AUTO_DEL_SUCCESS_MSG,
-    FLOOD_MAX_REQUESTS,
-    FLOOD_TIME_WINDOW,
-    USER_REQUESTS,
-    TIME_WINDOW
+    AUTO_DEL_SUCCESS_MSG
 )
 
 # Initialize logger
 logger = logging.getLogger(__name__)
 
-# Rate limiting tracking
-request_timestamps = deque()
-user_request_timestamps = defaultdict(deque)
-user_rate_limit = {}
-# (©) WeekendsBotz
-# ... (keep all your existing imports and code above)
-
-async def reply_with_clean(message: Message, text: str, **kwargs):
-    """Reply with auto-delete functionality"""
-    reply = await message.reply(text, **kwargs)
-    if AUTO_CLEAN:
-        asyncio.create_task(_auto_delete(reply, message))
-    return reply
-
-async def _auto_delete(*messages: Message):
-    """Background task to delete messages"""
-    await asyncio.sleep(DELETE_DELAY)
-    for msg in messages:
-        try:
-            await msg.delete()
-        except Exception as e:
-            logger.error(f"Failed to auto-delete message: {e}")
-
-# ... (keep all your existing code below)
 async def is_subscribed(filter, client, update) -> bool:
     """Check if user is subscribed to required channels"""
     if not any([FORCE_SUB_CHANNEL_1, FORCE_SUB_CHANNEL_2, FORCE_SUB_CHANNEL_3, FORCE_SUB_CHANNEL_4]):
@@ -75,7 +45,7 @@ async def is_subscribed(filter, client, update) -> bool:
         except UserNotParticipant:
             return False
         except Exception as e:
-            logger.error(f"Error checking subscription for channel {channel_id}: {e}")
+            logger.error(f"Subscription check error for channel {channel_id}: {e}")
             continue
 
     return True
@@ -183,27 +153,20 @@ async def delete_file(messages: List[Message], client, process: Message) -> None
     except Exception as e:
         logger.error(f"Failed to edit process message: {e}")
 
-def is_user_limited(user_id: int) -> bool:
-    """Check if user has exceeded rate limits"""
-    now = time.time()
-    
-    # Global rate limit
-    while request_timestamps and now - request_timestamps[0] > TIME_WINDOW:
-        request_timestamps.popleft()
-    if len(request_timestamps) >= GLOBAL_REQUESTS:
-        return True
-    
-    # User-specific rate limit
-    user_queue = user_request_timestamps[user_id]
-    while user_queue and now - user_queue[0] > TIME_WINDOW:
-        user_queue.popleft()
-    
-    if len(user_queue) >= USER_REQUESTS:
-        return True
-    
-    request_timestamps.append(now)
-    user_queue.append(now)
-    return False
-
 # Create filter for subscription check
 subscribed = filters.create(is_subscribed)
+async def reply_with_clean(message: Message, text: str, **kwargs):
+    """Reply with auto-delete functionality"""
+    reply = await message.reply(text, **kwargs)
+    if AUTO_DELETE_TIME > 0:
+        asyncio.create_task(_auto_delete(reply, message))
+    return reply
+
+async def _auto_delete(*messages: Message):
+    """Background task to delete messages"""
+    await asyncio.sleep(AUTO_DELETE_TIME)
+    for msg in messages:
+        try:
+            await msg.delete()
+        except Exception as e:
+            logger.error(f"Failed to auto-delete message: {e}")
