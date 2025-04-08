@@ -129,7 +129,10 @@ async def reply_with_clean(message, text, **kwargs):
 @Bot.on_message(filters.command("start") & filters.private)
 async def start_handler(client: Client, message: Message):
     user_id = message.from_user.id
-    
+       # 🔹 Soft Rate Limit Check
+    if await is_soft_limited(user_id):
+        return await reply_with_clean(message, "🍃 Too fast! Please wait a few seconds ⏳")
+
     # Flood Check
     is_flooding, level = await check_flood(user_id)
     if is_flooding:
