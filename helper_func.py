@@ -6,7 +6,7 @@ import logging
 import time
 from collections import deque
 from typing import List, Optional, Tuple
-
+from config import SOFT_THROTTLE_WINDOW
 from collections import defaultdict
 from datetime import datetime, timedelta
 from config import FLOOD_MAX_REQUESTS, FLOOD_TIME_WINDOW, GLOBAL_REQUESTS, GLOBAL_TIME_WINDOW
@@ -251,11 +251,15 @@ from time import time
 # Memory cache for soft throttle
 user_last_action = {}
 
-# Change time window as needed (in seconds)
-SOFT_THROTTLE_WINDOW = 10
+# ===== SOFT THROTTLE (PER-USER SHORT TIME WINDOW) ===== #
+from time import time as time_now
 
-async def is_user_limited(user_id: int) -> bool:
-    current_time = time()
+# Memory cache for soft throttle
+user_last_action = {}
+
+async def is_soft_limited(user_id: int) -> bool:
+    """Soft throttle: Prevents user spamming within a few seconds"""
+    current_time = time_now()
     last_time = user_last_action.get(user_id, 0)
 
     if current_time - last_time < SOFT_THROTTLE_WINDOW:
