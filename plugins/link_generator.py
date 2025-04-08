@@ -1,72 +1,81 @@
-from pyrogram import filters
+from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
-from bot import Bot  # Make sure this is your pyrogram Client
+from bot import Bot
 from config import ADMINS
 from helper_func import encode, get_message_id
 
+# ⚙️ Helper function to get a valid DB Channel message
+async def get_valid_db_message(client, user_id, ask_text):
+    while True:
+        try:
+            response = await client.ask(
+                chat_id=user_id,
+                text=ask_text,
+                filters=(filters.forwarded | (filters.text & ~filters.forwarded)),
+                timeout=60
+            )
+        except:
+            return None, None
 
-@Bot.on_message(filters.private & filters.user(ADMINS) & filters.command("batch"))
-async def batch_handler(client, message: Message):
-    try:
-        first_msg = await client.ask(
-            chat_id=message.chat.id,
-            text="📥 <b>Send the FIRST DB Channel post (forward/link)</b>",
-            filters=(filters.forwarded | filters.text),
-            timeout=60
-        )
-        first_id = await get_message_id(client, first_msg)
-        if not first_id:
-            return await first_msg.reply("❌ Invalid DB message.")
+        msg_id = await get_message_id(client, response)
+        if msg_id:
+            return response, msg_id
+        else:
+            await response.reply("❌ <b>Invalid DB Channel message.</b>\n\nMake sure it's forwarded from or linked to the original DB Channel.", quote=True)
 
-        second_msg = await client.ask(
-            chat_id=message.chat.id,
-            text="📤 <b>Now send the LAST DB Channel post (forward/link)</b>",
-            filters=(filters.forwarded | filters.text),
-            timeout=60
-        )
-        second_id = await get_message_id(client, second_msg)
-        if not second_id:
-            return await second_msg.reply("❌ Invalid DB message.")
+# 🏴‍☠️ /batch - Generate file batch links from DB posts
+@Bot.on_message(filters.private & filters.user(ADMINS) & filters.command('batch'))
+async def batch(client: Client, message: Message):
+    resp1, f_msg_id = await get_valid_db_message(
+        client,
+        message.from_user.id,
+        "<b>📥 Forward the <u>First</u> Message from the DB Channel or Send the Link</b>"
+    )
+    if not f_msg_id:
+        return
 
-        payload = f"get-{first_id}-{second_id}"
-        encoded = await encode(payload)
-        bot_username = (await client.get_me()).username
-        link = f"https://t.me/{bot_username}?start={encoded}"
+    resp2, s_msg_id = await get_valid_db_message(
+        client,
+        message.from_user.id,
+        "<b>📤 Now forward the <u>Last</u> Message from the DB Channel or Send the Link</b>"
+    )
+    if not s_msg_id:
+        return
 
-        await second_msg.reply_text(
-            f"<b>🏴‍☠️ Here's your treasure map!</b>\n\n<code>{link}</code>",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("☠️ Get Files Again", url=link)]
-            ]),
-            quote=True
-        )
-    except Exception as e:
-        await message.reply_text(f"⚠️ Error: <code>{e}</code>")
+    # Encode the link string
+    encoded = await encode(f"get-{f_msg_id * abs(client.db_channel.id)}-{s_msg_id * abs(client.db_channel.id)}")
+    link = f"https://t.me/{client.username}?start={encoded}"
 
+    reply_markup = InlineKeyboardMarkup([
+        [InlineKeyboardButton("🔁 Share Link", url=f"https://telegram.me/share/url?url={link}")]
+    ])
 
-@Bot.on_message(filters.private & filters.user(ADMINS) & filters.command("genlink"))
-async def genlink_handler(client, message: Message):
-    try:
-        reply = await client.ask(
-            chat_id=message.chat.id,
-            text="📥 <b>Send a DB Channel post (forward or link)</b>",
-            filters=(filters.forwarded | filters.text),
-            timeout=60
-        )
-        msg_id = await get_message_id(client, reply)
-        if not msg_id:
-            return await reply.reply("❌ Invalid DB message.")
+    await resp2.reply_text(
+        f"<b>🏴‍☠️ Here’s your treasure map!</b>\n\n<code>{link}</code>",
+        reply_markup=reply_markup,
+        quote=True
+    )
 
-        encoded = await encode(f"get-{msg_id}")
-        bot_username = (await client.get_me()).username
-        link = f"https://t.me/{bot_username}?start={encoded}"
+# 🧭 /genlink - Generate link for a single post
+@Bot.on_message(filters.private & filters.user(ADMINS) & filters.command('genlink'))
+async def genlink(client: Client, message: Message):
+    resp, msg_id = await get_valid_db_message(
+        client,
+        message.from_user.id,
+        "<b>📬 Forward a DB Channel Message or Send its Link</b>"
+    )
+    if not msg_id:
+        return
 
-        await reply.reply_text(
-            f"<b>🏴‍☠️ Here's your treasure link!</b>\n\n<code>{link}</code>",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("☠️ Get File Again", url=link)]
-            ]),
-            quote=True
-        )
-    except Exception as e:
-        await message.reply_text(f"⚠️ Error: <code>{e}</code>")
+    encoded = await encode(f"get-{msg_id * abs(client.db_channel.id)}")
+    link = f"https://t.me/{client.username}?start={encoded}"
+
+    reply_markup = InlineKeyboardMarkup([
+        [InlineKeyboardButton("🔁 Share Link", url=f"https://telegram.me/share/url?url={link}")]
+    ])
+
+    await resp.reply_text(
+        f"<b>🏴‍☠️ Here’s your treasure link!</b>\n\n<code>{link}</code>",
+        reply_markup=reply_markup,
+        quote=True
+    )
