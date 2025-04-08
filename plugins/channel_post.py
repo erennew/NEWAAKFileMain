@@ -2,11 +2,21 @@
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from bot import Bot
-from config import ADMINS, DB_CHANNEL, FORCE_SUB_CHANNELS
+from config import ADMINS, DB_CHANNEL, FORCE_SUB_CHANNEL_1, FORCE_SUB_CHANNEL_2, FORCE_SUB_CHANNEL_3, FORCE_SUB_CHANNEL_4
 from helper_func import encode, get_message_id, is_subscribed
 import logging
 
 logger = logging.getLogger(__name__)
+
+# Create dynamic list of active channels
+ACTIVE_CHANNELS = [
+    channel for channel in [
+        FORCE_SUB_CHANNEL_1,
+        FORCE_SUB_CHANNEL_2,
+        FORCE_SUB_CHANNEL_3,
+        FORCE_SUB_CHANNEL_4
+    ] if channel  # Only include configured channels
+]
 
 # --- Admin Side (Link Generation) ---
 @Bot.on_message(filters.private & filters.user(ADMINS) & filters.command('genlink'))
@@ -47,12 +57,14 @@ async def deliver_file(client: Client, message: Message):
     
     # Check force subscription
     if not await is_subscribed(None, client, message):
-        channels_text = "\n".join([f"• @{channel}" for channel in FORCE_SUB_CHANNELS])
+        # Create buttons for each active channel
+        buttons = []
+        for channel in ACTIVE_CHANNELS:
+            buttons.append([InlineKeyboardButton(f"Join Channel", url=f"t.me/{channel}")])
+        
         return await message.reply_text(
-            f"📢 Join our channels first:\n{channels_text}",
-            reply_markup=InlineKeyboardMarkup([[
-                InlineKeyboardButton("Join Channel", url=f"t.me/{FORCE_SUB_CHANNELS[0]}")
-            ]]),
+            "📢 Join our channels first to access files:",
+            reply_markup=InlineKeyboardMarkup(buttons),
             quote=True
         )
     
@@ -70,20 +82,3 @@ async def deliver_file(client: Client, message: Message):
     except Exception as e:
         logger.error(f"File delivery error: {e}")
         await message.reply("❌ Failed to send file. Link may be expired.", quote=True)
-
-# --- Helper Functions (in helper_func.py) ---
-async def is_subscribed(filter, client, update):
-    """Check if user joined all required channels"""
-    user_id = update.from_user.id
-    if user_id in ADMINS:
-        return True
-    
-    for channel in FORCE_SUB_CHANNELS:
-        try:
-            member = await client.get_chat_member(channel, user_id)
-            if member.status not in ["member", "administrator", "creator"]:
-                return False
-        except Exception:
-            return False
-    
-    return True
