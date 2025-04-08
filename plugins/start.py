@@ -189,7 +189,6 @@ async def start_handler(client: Client, message: Message):
                 reply_markup=InlineKeyboardMarkup(buttons),
                 quote=True
             )
-
     # Handle file links
     text = message.text
     if len(text) > 7:
@@ -206,7 +205,15 @@ async def start_handler(client: Client, message: Message):
                 ids = [int(int(argument[1]) / abs(DB_CHANNEL))]
             else:
                 return await message.reply("⚠️ Invalid file link format")
-                
+
+            # 🎬 Boot Animation before sending files
+            boot_msg = await message.reply("🚢 Starting system check...")
+            for line in random.choice(boot_sequences):
+                await asyncio.sleep(1.2)
+                await boot_msg.edit(line)
+            await asyncio.sleep(0.5)
+            await boot_msg.delete()
+
             temp_msg = await message.reply(f"<blockquote>⚡ Preparing your files...</blockquote>")
             messages = await get_messages(client, ids)
             await temp_msg.delete()
@@ -279,6 +286,7 @@ async def start_handler(client: Client, message: Message):
             print(f"File link processing error: {e}")
             await message.reply("⚠️ Invalid or broken file link")
             return
+
 
     # Normal start without payload
     if not await present_user(user_id):
