@@ -25,7 +25,10 @@ from helper_func import (
 )
 
 AUTO_DELETE_TIME = int(os.getenv("AUTO_DELETE_TIME", 900))  # 15 minutes default
+from helper_func import request_timestamps, is_user_limited
 
+if await is_user_limited(user_id):
+    await message.reply("Too many requests! Please wait.")
 def get_user_request_count(user_id: int) -> int:
     """Count requests from specific user"""
     return sum(1 for ts in request_timestamps 
