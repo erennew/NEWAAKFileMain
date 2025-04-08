@@ -1,84 +1,64 @@
 # (©) WeekendsBotz
-from pyrogram import Client, filters
-from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
-from bot import Bot
-from config import ADMINS, DB_CHANNEL, FORCE_SUB_CHANNEL_1, FORCE_SUB_CHANNEL_2, FORCE_SUB_CHANNEL_3, FORCE_SUB_CHANNEL_4
-from helper_func import encode, get_message_id, is_subscribed
+import asyncio
 import logging
+from pyrogram import filters, Client
+from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.errors import FloodWait, RPCError
+
+from bot import Bot
+from config import ADMINS, DB_CHANNEL, DISABLE_CHANNEL_BUTTON
+from helper_func import encode
 
 logger = logging.getLogger(__name__)
 
-# Create dynamic list of active channels
-ACTIVE_CHANNELS = [
-    channel for channel in [
-        FORCE_SUB_CHANNEL_1,
-        FORCE_SUB_CHANNEL_2,
-        FORCE_SUB_CHANNEL_3,
-        FORCE_SUB_CHANNEL_4
-    ] if channel  # Only include configured channels
-]
-
-# --- Admin Side (Link Generation) ---
-@Bot.on_message(filters.private & filters.user(ADMINS) & filters.command('genlink'))
-async def generate_link(client: Client, message: Message):
-    """Generate shareable links for files in DB channel"""
-    # Get the message from admin
-    msg = await client.ask(
-        chat_id=message.from_user.id,
-        text="📤 Forward the file from DB Channel or send its link",
-        filters=filters.forwarded | (filters.text & ~filters.forwarded),
-        timeout=120
-    )
-    
-    # Validate message
-    msg_id = await get_message_id(client, msg)
-    if not msg_id:
-        return await msg.reply("❌ Invalid message. Must be from DB Channel", quote=True)
-    
-    # Create encoded link
-    encoded = await encode(f"file_{msg_id}")
-    link = f"https://t.me/{client.username}?start={encoded}"
-    
-    # Send to admin
-    await msg.reply_text(
-        f"🔗 Your Shareable Link:\n\n{link}",
-        reply_markup=InlineKeyboardMarkup([[
-            InlineKeyboardButton("Share Link", url=f"https://t.me/share/url?url={link}")
-        ]]),
-        quote=True
-    )
-
-# --- User Side (File Delivery) ---
-@Bot.on_message(filters.private & filters.command("start"))
-async def deliver_file(client: Client, message: Message):
-    """Handle user requests for files"""
-    if len(message.command) < 2:
-        return await message.reply("Send me a valid file link")
-    
-    # Check force subscription
-    if not await is_subscribed(None, client, message):
-        # Create buttons for each active channel
-        buttons = []
-        for channel in ACTIVE_CHANNELS:
-            buttons.append([InlineKeyboardButton(f"Join Channel", url=f"t.me/{channel}")])
-        
-        return await message.reply_text(
-            "📢 Join our channels first to access files:",
-            reply_markup=InlineKeyboardMarkup(buttons),
-            quote=True
-        )
+@Bot.on_message(
+    filters.private & 
+    filters.user(ADMINS) & 
+    ~filters.command(['start','users','broadcast','batch','genlink','stats'])
+)
+async def channel_post(client: Client, message: Message):
+    """Handle admin posts to database channel"""
+    processing_msg = await message.reply_text("⚙ Processing your file...", quote=True)
     
     try:
-        # Decode file ID
-        file_id = int(message.command[1].split("_")[1])
+        # Copy message to DB channel with retry logic
+        try:
+            post_message = await message.copy(
+                chat_id=DB_CHANNEL,
+                disable_notification=True
+            )
+        except FloodWait as e:
+            await processing_msg.edit_text(f"⏳ Flood wait: {e.value} seconds")
+            await asyncio.sleep(e.value)
+            post_message = await message.copy(
+                chat_id=DB_CHANNEL,
+                disable_notification=True
+            )
+            
+        # Generate shareable link
+        converted_id = post_message.id * abs(DB_CHANNEL)
+        base64_string = await encode(f"get-{converted_id}")
+        link = f"https://t.me/{client.username}?start={base64_string}"
         
-        # Forward file to user
-        await client.copy_message(
-            chat_id=message.chat.id,
-            from_chat_id=DB_CHANNEL,
-            message_id=file_id
+        # Create share button
+        reply_markup = InlineKeyboardMarkup([[
+            InlineKeyboardButton("🔗 Share Link", url=f'https://telegram.me/share/url?url={link}'),
+            InlineKeyboardButton("📥 Direct Link", url=link)
+        ]])
+        
+        # Send final message
+        await processing_msg.edit_text(
+            f"✅ <b>Link Generated Successfully!</b>\n\n"
+            f"<code>{link}</code>\n\n"
+            f"• Post ID: <code>{post_message.id}</code>\n"
+            f"• DB Channel: <code>{DB_CHANNEL}</code>",
+            reply_markup=reply_markup,
+            disable_web_page_preview=True
         )
         
+    except RPCError as e:
+        logger.error(f"Channel post error: {e}")
+        await processing_msg.edit_text("❌ Failed to process your file. Please try again.")
     except Exception as e:
-        logger.error(f"File delivery error: {e}")
-        await message.reply("❌ Failed to send file. Link may be expired.", quote=True)
+        logger.error(f"Unexpected error: {e}")
+        await processing_msg.edit_text("⚠️ An unexpected error occurred. Contact support.")
