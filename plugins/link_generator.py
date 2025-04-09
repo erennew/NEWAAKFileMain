@@ -6,7 +6,7 @@ import logging
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.errors import FloodWait, RPCError
-from config import ADMINS, DB_CHANNEL, API_ID, API_HASH, BOT_TOKEN
+from config import ADMINS, DB_CHANNEL, API_ID, API_HASH, TG_BOT_TOKEN
 
 # Set up crash-resistant logging
 logging.basicConfig(
