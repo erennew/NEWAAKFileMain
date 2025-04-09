@@ -8,7 +8,7 @@ load_dotenv()
 
 # ===== Bot Configuration ===== #
 TG_BOT_TOKEN = os.environ.get("TG_BOT_TOKEN", "7988129609:AAHIJGSZm2-Ryso22AR4X5s05ZF-HaMmfuc")
-API_ID = int(os.environ.get("APP_ID", 24500584))
+API_ID = int(os.environ.get("API_ID", 24500584))
 API_HASH = os.environ.get("API_HASH", "449da69cf4081dc2cc74eea828d0c490")
 OWNER_ID = int(os.environ.get("OWNER_ID", 1047253913))
 
@@ -130,8 +130,8 @@ def LOGGER(name: str) -> logging.Logger:
 if not TG_BOT_TOKEN:
     raise ValueError("TG_BOT_TOKEN environment variable is required!")
 
-if not all([APP_ID, API_HASH]):
-    raise ValueError("APP_ID and API_HASH environment variables are required!")
+if not all([API_ID, API_HASH]):
+    raise ValueError("API_ID and API_HASH environment variables are required!")
 
 if not DB_CHANNEL:
     raise ValueError("DB_CHANNEL environment variable is required!")
