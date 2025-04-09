@@ -42,7 +42,7 @@ class Bot(Client):
         super().__init__(
             name="LuffyFileBot",
             api_hash=API_HASH,
-            api_id=APP_ID,
+            api_id=API_ID,
             plugins={"root": "plugins"},
             workers=TG_BOT_WORKERS or 4,
             bot_token=TG_BOT_TOKEN,
